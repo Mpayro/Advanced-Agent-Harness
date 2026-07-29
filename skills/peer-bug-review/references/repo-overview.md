@@ -5,6 +5,12 @@
 Exhaustive means every enumerated surface is assigned and classified. It does not
 mean proving that no undiscovered bug exists.
 
+The fast profile is intentionally bounded and must not call itself exhaustive. It
+freezes only the current pass, inspects each inventory ID once, and defers later
+incidental candidates to the next wave unless they are critical or caused by the
+current diff. Repeated clean rounds belong only to an explicitly requested
+exhaustive run.
+
 Build a coverage inventory from repository evidence before spawning agents. Prefer
 an already-configured repo index; otherwise use structural search and `rg`. Do not
 install a search dependency only for this audit.

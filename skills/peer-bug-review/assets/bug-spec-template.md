@@ -49,10 +49,12 @@
 - Targeted verification:
 - Product smoke:
 
-## Adversarial plan review
+## Plan gate
 
+- Route: `FULL_REVIEW` | `FAST_WAIVER`
 - Iteration:
 - Verdict:
+- Waiver evidence:
 - Concrete rejection or accepted evidence:
 
 ## Implementation review

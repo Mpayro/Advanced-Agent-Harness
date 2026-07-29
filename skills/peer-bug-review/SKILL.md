@@ -21,6 +21,15 @@ bugs.”
 - In repair mode, use `end-to-end-coding-session` for branch/worktree, plan gate,
   TDD, verification, and stop-before-commit behavior.
 - Use `coding-peers` or local subagents for independent review when available.
+- Route every spawned explorer, verifier, reviewer, implementer, and integration
+  adversary through the cheap native model for the active harness: Sonnet in
+  Claude/Claude Code, or GPT-5.6 Luna in Codex. Detect the harness from the
+  runtime, not the skill path. In Codex, use the local `codex exec` Luna adapter
+  when the thread subagent tool does not expose Luna. Never upgrade this
+  workflow's subagents to Opus, Terra, or Sol.
+- Keep exactly one workflow owner for confirmation, planning, fix review, and
+  verification. If an outer loop already owns a compatible gate, use that evidence
+  instead of spawning a duplicate gate.
 - Follow repository `AGENTS.md`, model restrictions, data boundaries, and
   concurrency limits before this skill.
 
@@ -48,7 +57,7 @@ bugs.”
   `scripts/eval_peer_bug_review.py` with its hidden oracle. Do not expose the oracle
   to audit agents or treat self-agreement as an evaluation.
 
-## Choose the mode
+## Choose the mode and profile
 
 - **Audit:** Default for “review,” “audit,” “find bugs,” or “repo overview.” Remain
   read-only except for explicitly requested review artifacts.
@@ -59,6 +68,14 @@ bugs.”
   and adjacent lifecycle states.
 - **Repo overview:** Build the coverage inventory first, then run the swarm. Never
   start with random file sampling.
+- **Fast profile:** Default. Inspect every frozen inventory item once, work in
+  closed repair waves of at most eight bugs, batch up to four unrelated targets
+  at the same review stage, and use at most three plan iterations. Low/medium-risk
+  bugs with deterministic RED proof may waive the separate plan-review agent;
+  confirmation and post-fix review remain mandatory.
+- **Exhaustive profile:** Use only when the user explicitly requests exhaustive,
+  prolonged, swarm, or multi-round coverage. Preserve separate confirmation,
+  plan, fix, and integration gates with the existing 10-iteration ceiling.
 
 ## Progress contract
 
@@ -87,8 +104,9 @@ Create exactly one persistent objective for the whole run. Use one Codex goal on
 when the user explicitly invoked a persistent audit/repair and the goal tool is
 available; otherwise use the state file as the loop owner.
 
-Initialize the state ledger. Keep it outside product paths in audit mode unless the
-user requested repo artifacts.
+Initialize the state ledger with `--profile fast` unless exhaustive work was
+explicitly requested. Keep it outside product paths in audit mode unless the user
+requested repo artifacts.
 
 ### 2. Inventory the actual surface
 
@@ -104,10 +122,11 @@ For repo overview, follow `references/repo-overview.md` and enumerate:
 - UI routes/tabs/forms/buttons/modals and empty/error/permission states;
 - test, build, deployment, security, and observability surfaces.
 
-Build both maps from `references/detection-and-evaluation.md`: the exhaustive coverage
-map and the risk/dependency-ranked attack map. Every item must be assigned to a lane,
+Build both maps from `references/detection-and-evaluation.md`: the coverage map and
+the risk/dependency-ranked attack map. Every item must be assigned to a lane,
 covered, or skipped with a reason. Generated, vendored, fixture, and unreachable code
-may be skipped explicitly.
+may be skipped explicitly. In fast profile, scope the frozen inventory to the
+current bounded pass; do not claim whole-repo exhaustiveness.
 
 Register every item with a stable inventory ID containing a type separator, such as
 `module:pricing`, `symbol:pricing.calculate`, or `ui:orders/submit`. Write the
@@ -122,11 +141,10 @@ Start with central high-risk seams, but exhaust the full coverage map before clo
 ### 3. Run the discovery swarm
 
 Reserve one concurrency slot for the coordinator. Fill remaining slots with small,
-read-only explorers and run additional waves until the coverage inventory is
-exhausted.
+read-only explorers.
 
-- Prefer permitted Luna explorers at low effort; fall back to Terra low or the
-  nearest permitted inexpensive Codex explorer.
+- Use the active harness's required cheap model for every explorer: Sonnet in
+  Claude/Claude Code or GPT-5.6 Luna in Codex.
 - Never violate repo/model instructions to satisfy a preferred model name.
 - Give each explorer a disjoint code or failure-method lane and an output budget.
 - Require covered symbols/journeys, commands/evidence, candidates, and gaps.
@@ -137,6 +155,12 @@ Run the deterministic probe phase from `references/detection-and-evaluation.md`;
 covered evidence must name `PROBES:`, `NEGATIVE_FINDINGS:`, and `COMMANDS:`. Use only
 repo-native, standard-library, or already-installed tools.
 
+In fast profile, inspect each inventory item once and immediately record it as
+covered, skipped, or blocked with evidence. Do not rescan a covered lane. Candidates
+discovered later go to the next wave unless they are critical or caused by the
+current diff. In exhaustive profile, run additional waves until the frozen inventory
+is exhausted; clean-round repetition is not required unless the user requested it.
+
 For UI, click every enumerated action in isolated Chrome with a temporary profile and
 remote debugging; include normal, empty, invalid, retry, permission, refresh, and
 back/forward states where applicable. Capture console/network evidence and downstream
@@ -144,20 +168,23 @@ state, not only screenshots.
 
 ### 4. Confirm candidates blindly
 
-Deduplicate candidates by root cause before review. For each remaining candidate,
-spawn a fresh adversarial verifier in parallel with unrelated discovery or repair
-work.
+Deduplicate candidates by root cause before review. Dispatch remaining candidates
+in same-stage batches of at most four unrelated targets. A cheap agent may review one
+batch, but it must grade every target independently from its own raw bundle and may
+not review the same finding at another stage.
 
 Give the verifier raw code/runtime artifacts, the applicable authority sources, and
 the reproduction surface. Do not provide the finder’s conclusion or intended fix.
 Freeze those raw inputs with `review_state.py freeze-target` before dispatch. Persist
-the response as a separate evidence artifact and use a fresh reviewer identity at
-every gate. Record its actual Codex task path as `agent:<task-path>`; the ledger
-rejects reviewer, response-evidence, or frozen-target reuse anywhere in the run.
+one evidence artifact and one logical reviewer identity per target. For a batched
+local runner use `agent:<runner-id>/<batch-id>/<finding-id>/<stage>`; the ledger
+rejects logical-identity, response-evidence, or frozen-target reuse.
 
-Use the stage-locked packet and malformed-output rules from
+Use the stage-locked packet and structured-output rules from
 `references/evidence-contract.md` at every confirmation, plan, fix, and integration
-gate. Never normalize an agent verdict manually.
+gate. With the local runner, pass `references/review-output.schema.json`, then render
+canonical per-target evidence with `scripts/render_review_batch.py`. Never normalize
+an agent verdict manually.
 
 Apply `references/evidence-contract.md`. Classify each candidate as exactly one:
 
@@ -182,7 +209,13 @@ minimal seam-level change, targeted checks, product proof, and excluded scope.
 Record the existing non-empty spec artifact before plan review; the ledger rejects
 plans without it and detects later artifact changes.
 
-Send each plan to a fresh adversarial reviewer. Ask it to find:
+In fast profile, a confirmed bug may waive the separate plan-review agent only when
+its inventory risk is low or medium, the spec contains deterministic RED proof, and
+the change excludes security, money, authorization, concurrency, migrations,
+destructive behavior, and cross-module contracts. Record the waiver with
+`review_state.py waive-plan`; the post-fix review remains mandatory.
+
+Otherwise send the plan to a fresh adversarial review context. Ask it to find:
 
 - a simpler shared seam;
 - missing readers/writers or cross-module parity;
@@ -202,8 +235,9 @@ same RED proof. Do not generate alternative patches when one root cause is estab
 
 ### 6. Repair with failure-first evidence
 
-After plan approval and user authorization, let `end-to-end-coding-session` own the
-safe branch/worktree and implementation discipline.
+After plan approval or a valid fast-profile waiver and user authorization, let
+`end-to-end-coding-session` own the safe branch/worktree and implementation
+discipline.
 
 When an end-to-end session invokes this skill from its terminal heavy-review offer,
 run in **embedded mode**: the outer approved plan, authorization, branch/worktree, and
@@ -212,13 +246,14 @@ another branch, commit, or emit another terminal heavy-review offer. Return
 `completed` only after this skill’s integration gate accepts; return `blocked` for
 missing authority/environment so the outer workflow cannot commit.
 
-For each bug:
+Repair non-overlapping bugs in closed waves of at most eight. For each bug:
 
 1. Reproduce RED on the baseline.
 2. Change the smallest shared root-cause seam.
 3. Run the narrow GREEN check.
 4. Run sibling/lifecycle checks.
-5. Send the actual diff and raw test output to a fresh parallel adversarial reviewer.
+5. Send the actual diff and raw test output to a fresh review context; batch up to
+   four unrelated fixes in one cheap-agent call.
 6. Verify every reviewer claim locally before changing code.
 7. Repeat only that bug’s failed stage.
 
@@ -227,7 +262,10 @@ that share files, state, schema, or business invariants.
 
 ### 7. Prove the assembled product
 
-After all individual fixes are accepted, run risk-mapped verification:
+Run narrow RED/GREEN and sibling checks per bug. Run the full suite, lint, typecheck,
+build, and security checks once per repair wave when relevant, then again only at the
+final assembled-product gate. After all individual fixes are accepted, run
+risk-mapped verification:
 
 - targeted tests per bug;
 - integration tests across shared seams;
@@ -289,7 +327,8 @@ loops, what went right, and what went wrong.
 |---|---:|---:|
 | Explorer transport retry | 1 | 1 |
 | Candidate confirmation | 2 | 3 |
-| Plan review | 2 | 10 per bug |
+| Plan review, fast | 1 | 3 per bug |
+| Plan review, exhaustive | 2 | 10 per bug |
 | Fix review | 3 | 10 per bug |
 | Suite/product retry | 2 | 3 |
 | Repeated identical blocker | 2 | Document and escalate |

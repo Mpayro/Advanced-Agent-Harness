@@ -99,7 +99,9 @@ skills/
     agents/openai.yaml
     assets/bug-spec-template.md
     references/
+      review-output.schema.json
     scripts/review_state.py
+    scripts/render_review_batch.py
     scripts/eval_peer_bug_review.py
   delegating-to-external-models/
   ponytail/
@@ -144,6 +146,7 @@ After installation:
 ```bash
 python3 ~/.codex/skills/end-to-end-coding-session/scripts/validate_workflow_suite.py
 python3 ~/.codex/skills/peer-bug-review/scripts/review_state.py self-test
+python3 ~/.codex/skills/peer-bug-review/scripts/render_review_batch.py --self-test
 python3 ~/.codex/skills/peer-bug-review/scripts/eval_peer_bug_review.py self-test
 ```
 

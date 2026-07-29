@@ -91,8 +91,8 @@ If the response misses the required schema or uses an invalid verdict:
 2. let the ledger append its reviewer, frozen target, raw path/digest, and failure
    reason to `format_failures`;
 3. do not normalize or paraphrase it yourself;
-4. ask a fresh agent for a complete stage-valid response against the same frozen
-   target.
+4. ask a fresh review context for a complete stage-valid response against the same
+   frozen target.
 
 For confirmation only, require this response:
 
@@ -105,11 +105,28 @@ ROOT_CAUSE: proven seam and affected consumers
 COUNTEREVIDENCE: strongest reason this might not be a bug
 ```
 
-Persist each response in its own evidence file using the exact section labels above.
-Use a distinct Codex agent for every confirmation, plan, fix, and final integration
-gate. Record the actual task path as `agent:<task-path>`; the ledger binds each
-artifact digest and rejects reviewer or evidence reuse across the whole run. The
-coordinator remains responsible for checking that the content is truthful.
+Persist each target response in its own evidence file using the exact section labels
+above. A cheap agent may evaluate up to four unrelated targets at the same stage in
+one batch, but it may not review the same finding at another stage. Record a logical
+identity per target as `agent:<task-path>` or
+`agent:<runner-id>/<batch-id>/<finding-id>/<stage>`; the ledger binds each artifact
+digest and rejects logical identity or evidence reuse. The coordinator remains
+responsible for checking that the content is truthful.
+
+## Structured batch output
+
+For `codex exec`, pass `references/review-output.schema.json` with
+`--output-schema` and capture the last message with `-o`. Render the batch into
+canonical per-target evidence:
+
+```bash
+python3 scripts/render_review_batch.py <batch-result.json> <evidence-directory>
+```
+
+The renderer accepts one stage and at most four target results, validates
+stage-specific fields and verdicts, keeps every required label non-empty on the same
+line, and prints a recording manifest. It is the only permitted normalization layer;
+never hand-edit a malformed model verdict into compliance.
 
 Plan-review artifacts must contain `VERDICT:`, `PLAN:`, and `COUNTEREVIDENCE:`.
 Fix-review artifacts must contain `VERDICT:`, `DIFF:`, `TESTS:`, and
@@ -126,11 +143,36 @@ only for confirmation; plan, fix, and integration responses use `VERDICT:`. Do n
 record an artifact that includes a controlling marker from another stage or any
 trailing text after the one allowed controlling value.
 
+## Fast plan waiver
+
+The fast profile may omit a separate plan-review agent only when all are true:
+
+- the frozen inventory risk is `low` or `medium`;
+- confirmation independently returned `CONFIRMED_BUG`;
+- the bug spec contains a deterministic RED proof and one minimal root seam;
+- the change does not touch security, money, authorization, concurrency,
+  migrations, destructive behavior, or a cross-module contract.
+
+Record a separate coordinator artifact containing:
+
+```text
+WAIVED: PLAN_REVIEW
+RED_PROOF: exact failing check
+ROOT_SEAM: one minimal seam
+SCOPE: affected callers and bounded files
+EXCLUSIONS: why every mandatory full-gate category is absent
+```
+
+Then run `review_state.py waive-plan`. This transitions the finding to `ready`
+without fabricating a reviewer. Confirmation and post-fix review remain mandatory.
+High/critical findings and exhaustive-profile runs may never use this waiver.
+
 ## Workflow state transitions
 
 | Mode/stage | Accepted or classified outcome | Ledger state | Terminal here? |
 |---|---|---|---|
 | Audit confirmation | confirmed bug | `confirmed_bug` | No; document and review the plan |
+| Fast plan waiver | valid waiver | `ready` | Audit only; repair still needs implementation |
 | Audit plan | accepted | `ready` | Yes for the finding; no product mutation is required |
 | Repair plan | accepted | `ready` | No; implementation has not started |
 | Repair fix | accepted | `accepted` | Yes for the finding |

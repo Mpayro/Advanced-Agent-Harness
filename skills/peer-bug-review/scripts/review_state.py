@@ -15,8 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-SCHEMA_VERSION = 3
-SUPPORTED_SCHEMA_VERSIONS = {2, 3}
+SCHEMA_VERSION = 4
+SUPPORTED_SCHEMA_VERSIONS = {2, 3, 4}
 FINDING_STATUSES = {
     "suspected",
     "confirmed_bug",
@@ -68,6 +68,15 @@ SPEC_MARKERS = (
 )
 COVERED_MARKERS = ("COVERED:", "PROBES:", "NEGATIVE_FINDINGS:", "COMMANDS:")
 RISKS = {"low", "medium", "high", "critical"}
+PROFILES = {"fast", "exhaustive"}
+GATE_POLICIES = {"fast", "full"}
+PLAN_WAIVER_MARKERS = (
+    "WAIVED:",
+    "RED_PROOF:",
+    "ROOT_SEAM:",
+    "SCOPE:",
+    "EXCLUSIONS:",
+)
 
 
 def now() -> str:
@@ -91,6 +100,7 @@ def append_trajectory(path: Path, state: dict, event: str) -> None:
         "event": event,
         "state_sha256": hashlib.sha256(encoded).hexdigest(),
         "status": state.get("status"),
+        "profile": state.get("profile", "exhaustive"),
         "coverage": {
             status: sum(
                 1
@@ -133,16 +143,24 @@ def save(path: Path, state: dict, event: str = "state-updated") -> None:
         raise
 
 
-def new_state(runtime: str, mode: str, max_iterations: int) -> dict:
-    if runtime != "codex":
-        raise ValueError("peer-bug-review is Codex-only")
+def new_state(
+    runtime: str,
+    mode: str,
+    max_iterations: int,
+    profile: str = "exhaustive",
+) -> dict:
+    if runtime not in {"codex", "claude"}:
+        raise ValueError(f"unsupported runtime: {runtime}")
     if max_iterations < 1 or max_iterations > 10:
         raise ValueError("max_iterations must be between 1 and 10")
+    if profile not in PROFILES:
+        raise ValueError(f"invalid profile: {profile}")
     stamp = now()
     return {
         "schema_version": SCHEMA_VERSION,
         "runtime": runtime,
         "mode": mode,
+        "profile": profile,
         "status": "active",
         "max_iterations": max_iterations,
         "created_at": stamp,
@@ -484,6 +502,7 @@ def finding_lifecycle_errors(
     confirmations = grouped["confirmation"]
     plans = grouped["plan"]
     fixes = grouped["fix"]
+    plan_waiver = finding.get("plan_waiver")
     expected = "suspected"
     if confirmations:
         verdict = confirmations[-1].get("verdict")
@@ -520,6 +539,19 @@ def finding_lifecycle_errors(
                             )
                     elif status == "implementing":
                         expected = "implementing"
+            elif isinstance(plan_waiver, dict):
+                expected = "ready"
+                if fixes:
+                    if fixes[-1].get("verdict") == "accepted":
+                        expected = "accepted"
+                    elif fixes[-1].get("verdict") == "rejected":
+                        expected = (
+                            "documented_blocked"
+                            if exhausted("fix", fixes)
+                            else "implementing"
+                        )
+                elif status == "implementing":
+                    expected = "implementing"
     if status != expected:
         errors.append(
             f"{finding_id}: status {status} does not match review history {expected}"
@@ -547,16 +579,21 @@ def validate(state: dict, *, require_complete: bool = False) -> list[str]:
     if not isinstance(schema_version, int) or schema_version not in SUPPORTED_SCHEMA_VERSIONS:
         errors.append("unsupported schema_version")
         schema_version = 0
-    if state.get("runtime") != "codex":
+    if state.get("runtime") not in {"codex", "claude"}:
         errors.append("invalid runtime")
     if not isinstance(state.get("mode"), str) or state.get("mode") not in {
         "audit",
         "repair",
     }:
         errors.append("invalid mode")
+    profile = state.get("profile", "exhaustive" if schema_version < 4 else None)
+    if not isinstance(profile, str) or profile not in PROFILES:
+        errors.append("invalid profile")
     limit = state.get("max_iterations")
     if not isinstance(limit, int) or not 1 <= limit <= 10:
         errors.append("invalid max_iterations")
+    elif profile == "fast" and limit > 3:
+        errors.append("fast profile max_iterations cannot exceed 3")
 
     if not isinstance(state.get("status"), str) or state.get("status") not in {
         "active",
@@ -865,6 +902,7 @@ def validate(state: dict, *, require_complete: bool = False) -> list[str]:
                         )
     resolution_digests: list[str] = []
     decision_digests: list[str] = []
+    waiver_digests: list[str] = []
     for finding_id, finding in findings.items():
         if not isinstance(finding, dict):
             errors.append(f"{finding_id}: finding must be an object")
@@ -875,6 +913,20 @@ def validate(state: dict, *, require_complete: bool = False) -> list[str]:
         item_id = finding.get("item")
         if not isinstance(item_id, str) or item_id not in coverage:
             errors.append(f"{finding_id}: unknown coverage item {item_id}")
+        gate_policy = finding.get(
+            "gate_policy",
+            "full" if schema_version < 4 else None,
+        )
+        if not isinstance(gate_policy, str) or gate_policy not in GATE_POLICIES:
+            errors.append(f"{finding_id}: invalid gate policy")
+        elif gate_policy == "fast":
+            item_risk = (
+                coverage.get(item_id, {}).get("risk")
+                if isinstance(coverage.get(item_id), dict)
+                else None
+            )
+            if profile != "fast" or item_risk not in {"low", "medium"}:
+                errors.append(f"{finding_id}: fast gate policy is not permitted")
         counts = finding.get("iterations")
         if not isinstance(counts, dict):
             errors.append(f"{finding_id}: iterations must be an object")
@@ -1008,6 +1060,54 @@ def validate(state: dict, *, require_complete: bool = False) -> list[str]:
                     schema_version=schema_version,
                 )
             )
+        plan_waiver = finding.get("plan_waiver")
+        if plan_waiver is not None:
+            if gate_policy != "fast":
+                errors.append(f"{finding_id}: plan waiver requires fast gate policy")
+            if not isinstance(plan_waiver, dict):
+                errors.append(f"{finding_id}: plan waiver must be an object")
+            else:
+                problem = artifact_error(
+                    plan_waiver.get("evidence"),
+                    f"{finding_id} plan waiver",
+                    PLAN_WAIVER_MARKERS,
+                )
+                if problem:
+                    errors.append(problem)
+                else:
+                    evidence = plan_waiver["evidence"]
+                    waiver_digests.append(evidence["sha256"])
+                    try:
+                        waived = declared_text(evidence, "WAIVED:")
+                    except (KeyError, OSError, TypeError, ValueError) as exc:
+                        errors.append(f"{finding_id}: plan waiver declaration: {exc}")
+                    else:
+                        if waived != "PLAN_REVIEW":
+                            errors.append(
+                                f"{finding_id}: invalid plan waiver declaration {waived}"
+                            )
+                if not isinstance(plan_waiver.get("at"), str):
+                    errors.append(f"{finding_id}: plan waiver timestamp missing")
+            if isinstance(reviews, list) and any(
+                review.get("stage") == "plan"
+                for review in reviews
+                if isinstance(review, dict)
+            ):
+                errors.append(f"{finding_id}: plan review and waiver are mutually exclusive")
+            if not isinstance(reviews, list) or not any(
+                review.get("stage") == "confirmation"
+                and review.get("verdict") == "confirmed"
+                for review in reviews
+                if isinstance(review, dict)
+            ):
+                errors.append(f"{finding_id}: plan waiver requires confirmed review")
+            problem = artifact_error(
+                finding.get("spec"),
+                f"{finding_id} spec",
+                SPEC_MARKERS,
+            )
+            if problem:
+                errors.append(problem)
         annotations = finding.get("resolution_annotations", [])
         if not isinstance(annotations, list):
             errors.append(f"{finding_id}: resolution_annotations must be an array")
@@ -1372,6 +1472,8 @@ def validate(state: dict, *, require_complete: bool = False) -> list[str]:
         errors.append("resolution evidence artifact reused in run")
     if len(decision_digests) != len(set(decision_digests)):
         errors.append("decision evidence artifact reused in run")
+    if len(waiver_digests) != len(set(waiver_digests)):
+        errors.append("plan waiver evidence artifact reused in run")
     coverage_digests = {
         item.get("evidence", {}).get("sha256")
         for item in coverage.values()
@@ -1389,11 +1491,24 @@ def validate(state: dict, *, require_complete: bool = False) -> list[str]:
         set(digests)
         | set(spec_digests)
         | set(resolution_digests)
+        | set(waiver_digests)
         | coverage_digests
         | set(target_digests)
     ):
         errors.append(
             "decision evidence reused as coverage, review, resolution, spec, or target"
+        )
+    if set(waiver_digests) & (
+        set(digests)
+        | set(spec_digests)
+        | set(resolution_digests)
+        | set(decision_digests)
+        | coverage_digests
+        | set(target_digests)
+    ):
+        errors.append(
+            "plan waiver evidence reused as coverage, review, resolution, decision, "
+            "spec, or target"
         )
 
     complete_gate = require_complete or state.get("status") == "complete"
@@ -1538,6 +1653,9 @@ def decision_resolution_evidence(finding: dict, mode: str) -> dict | None:
         ]
         return accepted[-1].get("evidence") if accepted else {}
     if mode == "audit" and status == "ready":
+        waiver = finding.get("plan_waiver")
+        if isinstance(waiver, dict) and isinstance(waiver.get("evidence"), dict):
+            return waiver["evidence"]
         reviews = finding.get("reviews", [])
         accepted = [
             review
@@ -1698,7 +1816,7 @@ def add_review(
 ) -> tuple[int, int]:
     reviewer = reviewer.strip()
     if not re.fullmatch(r"agent:[A-Za-z0-9_./-]{3,}", reviewer):
-        raise ValueError("reviewer must be an actual Codex task path prefixed with agent:")
+        raise ValueError("reviewer must be an actual task path prefixed with agent:")
     count = finding["iterations"][stage] + 1
     if count > min(limit, STAGE_HARD_LIMITS[stage]):
         raise ValueError(f"{stage} iteration limit reached")
@@ -1732,7 +1850,15 @@ def cmd_init(args: argparse.Namespace) -> None:
     trajectory = Path(f"{path}.events.jsonl")
     if trajectory.exists():
         raise ValueError(f"trajectory already exists without state: {trajectory}")
-    save(path, new_state(args.runtime, args.mode, args.max_iterations), "init")
+    profile = getattr(args, "profile", "exhaustive")
+    max_iterations = getattr(args, "max_iterations", None)
+    if max_iterations is None:
+        max_iterations = 3 if profile == "fast" else 10
+    save(
+        path,
+        new_state(args.runtime, args.mode, max_iterations, profile),
+        "init",
+    )
 
 
 def cmd_coverage(args: argparse.Namespace) -> None:
@@ -2067,6 +2193,22 @@ def cmd_add(args: argparse.Namespace) -> None:
             decision_iteration = subject["iterations"][decision_stage] + 1
     else:
         decision_iteration = None
+    requested_gate = getattr(args, "gate", "auto")
+    item_risk = state["coverage"][args.item]["risk"]
+    if decision_stage:
+        gate_policy = "full"
+    elif requested_gate == "auto":
+        gate_policy = (
+            "fast"
+            if state.get("profile") == "fast" and item_risk in {"low", "medium"}
+            else "full"
+        )
+    else:
+        gate_policy = requested_gate
+    if gate_policy == "fast" and (
+        state.get("profile") != "fast" or item_risk not in {"low", "medium"}
+    ):
+        raise ValueError("fast gate requires fast profile and low/medium inventory risk")
     state["findings"][args.id] = {
         "title": args.title,
         "item": args.item,
@@ -2074,6 +2216,8 @@ def cmd_add(args: argparse.Namespace) -> None:
         "status": "suspected",
         "iterations": {"confirmation": 0, "plan": 0, "fix": 0},
         "reviews": [],
+        "gate_policy": gate_policy,
+        "plan_waiver": None,
         "resolution_annotations": [],
         "decision_annotations": [],
         "decision_for": (
@@ -2255,6 +2399,49 @@ def cmd_document(args: argparse.Namespace) -> None:
     save(path, state, "bug-documented")
 
 
+def cmd_waive_plan(args: argparse.Namespace) -> None:
+    path = Path(args.state)
+    state = load(path)
+    require_active(state)
+    finding = require_finding(state, args.id)
+    if state.get("profile") != "fast" or finding.get("gate_policy") != "fast":
+        raise ValueError("plan waiver requires fast profile and fast gate policy")
+    if finding.get("status") != "confirmed_bug":
+        raise ValueError("plan waiver requires confirmed_bug")
+    if not finding.get("spec"):
+        raise ValueError("document the confirmed bug before waiving plan review")
+    if finding.get("plan_waiver") is not None:
+        raise ValueError("plan review is already waived")
+    if any(
+        review.get("stage") == "plan"
+        for review in finding.get("reviews", [])
+        if isinstance(review, dict)
+    ):
+        raise ValueError("cannot waive plan review after plan review started")
+    evidence = artifact(args.evidence_file, PLAN_WAIVER_MARKERS)
+    if declared_text(evidence, "WAIVED:") != "PLAN_REVIEW":
+        raise ValueError("plan waiver must declare WAIVED: PLAN_REVIEW")
+    used_digests = {
+        review.get("evidence", {}).get("sha256")
+        for value in state["findings"].values()
+        for review in value.get("reviews", [])
+        if isinstance(review, dict)
+    } | {
+        value.get("plan_waiver", {}).get("evidence", {}).get("sha256")
+        for value in state["findings"].values()
+        if isinstance(value.get("plan_waiver"), dict)
+    }
+    if evidence["sha256"] in used_digests:
+        raise ValueError("plan waiver evidence artifact already used in this run")
+    finding["plan_waiver"] = {"evidence": evidence, "at": now()}
+    finding["status"] = "ready"
+    finding.setdefault("notes", []).append({"at": now(), "note": args.note})
+    errors = validate(state)
+    if errors:
+        raise ValueError("; ".join(errors))
+    save(path, state, "plan-review-waived")
+
+
 def cmd_mark(args: argparse.Namespace) -> None:
     path = Path(args.state)
     state = load(path)
@@ -2398,7 +2585,7 @@ def cmd_integration(args: argparse.Namespace) -> None:
         raise ValueError("rejected integration review requires --blocker")
     reviewer = args.reviewer.strip()
     if not re.fullmatch(r"agent:[A-Za-z0-9_./-]{3,}", reviewer):
-        raise ValueError("reviewer must be an actual Codex task path prefixed with agent:")
+        raise ValueError("reviewer must be an actual task path prefixed with agent:")
     used_reviewers = {
         review.get("reviewer")
         for finding in state["findings"].values()
@@ -2519,6 +2706,7 @@ def summary_payload(state: dict) -> dict:
         ),
         "runtime": state["runtime"],
         "mode": state["mode"],
+        "profile": state.get("profile", "exhaustive"),
         "status": state["status"],
         "coverage": {
             key: {
@@ -2532,6 +2720,8 @@ def summary_payload(state: dict) -> dict:
             key: {
                 "status": value["status"],
                 "iterations": value["iterations"],
+                "gate_policy": value.get("gate_policy", "full"),
+                "plan_review_waived": isinstance(value.get("plan_waiver"), dict),
                 "decision_for": value.get("decision_for"),
                 "decision_annotated": bool(value.get("decision_annotations", [])),
                 "resolved_by": [
@@ -3886,6 +4076,153 @@ def cmd_self_test(_args: argparse.Namespace) -> None:
         assert any(
             "blocker missing" in error for error in validate(forged_blocked)
         )
+        fast_path = root / "fast.json"
+        cmd_init(
+            argparse.Namespace(
+                state=str(fast_path),
+                runtime="claude",
+                mode="repair",
+                profile="fast",
+                max_iterations=3,
+            )
+        )
+        cmd_coverage(
+            argparse.Namespace(
+                state=str(fast_path),
+                item="symbol:limited",
+                lane="core",
+                risk="low",
+                priority=10,
+                status="covered",
+                evidence_file=str(files["coverage-core"]),
+            )
+        )
+        fast_manifest = write(
+            "fast-manifest",
+            "REPOSITORY: /tmp/example\nCOMMIT: deadbeef\nINVENTORY:\n"
+            "- symbol:limited\n",
+        )
+        cmd_freeze_coverage(
+            argparse.Namespace(
+                state=str(fast_path),
+                manifest_file=str(fast_manifest),
+            )
+        )
+        cmd_add(
+            argparse.Namespace(
+                state=str(fast_path),
+                id="BUG-FAST",
+                title="bounded fast-path bug",
+                item="symbol:limited",
+                gate="auto",
+                decision_for_stage=None,
+                decision_for_subject=None,
+            )
+        )
+        fast_confirm_target = freeze(
+            "confirmation",
+            "BUG-FAST",
+            "confirm",
+            state_path=fast_path,
+        )
+        fast_confirm = bind(
+            "fast-confirm",
+            "confirm",
+            fast_confirm_target,
+        )
+        cmd_review(
+            argparse.Namespace(
+                state=str(fast_path),
+                id="BUG-FAST",
+                stage="confirmation",
+                verdict="confirmed",
+                reviewer="agent:/root/fast-confirm",
+                evidence_file=str(fast_confirm),
+                blocker=None,
+            )
+        )
+        cmd_document(
+            argparse.Namespace(
+                state=str(fast_path),
+                id="BUG-FAST",
+                spec=str(files["spec"]),
+                note="fast finding documented",
+            )
+        )
+        waiver = write(
+            "fast-plan-waiver",
+            "WAIVED: PLAN_REVIEW\n"
+            "RED_PROOF: deterministic failing self-check\n"
+            "ROOT_SEAM: one bounded parser seam\n"
+            "SCOPE: symbol:limited and its direct caller\n"
+            "EXCLUSIONS: no security, money, auth, concurrency, migration, "
+            "destructive, or cross-module contract\n",
+        )
+        cmd_waive_plan(
+            argparse.Namespace(
+                state=str(fast_path),
+                id="BUG-FAST",
+                evidence_file=str(waiver),
+                note="low-risk deterministic RED",
+            )
+        )
+        fast_summary = summary_payload(load(fast_path))
+        assert fast_summary["profile"] == "fast"
+        assert fast_summary["findings"]["BUG-FAST"]["plan_review_waived"]
+        cmd_mark(
+            argparse.Namespace(
+                state=str(fast_path),
+                id="BUG-FAST",
+                status="implementing",
+                note="implementing bounded fix",
+            )
+        )
+        fast_fix_target = freeze(
+            "fix",
+            "BUG-FAST",
+            "fix",
+            state_path=fast_path,
+        )
+        fast_fix = bind("fast-fix", "fix", fast_fix_target)
+        cmd_review(
+            argparse.Namespace(
+                state=str(fast_path),
+                id="BUG-FAST",
+                stage="fix",
+                verdict="accepted",
+                reviewer="agent:/root/fast-fix",
+                evidence_file=str(fast_fix),
+                blocker=None,
+            )
+        )
+        fast_integration_target = freeze(
+            "integration",
+            "ALL",
+            fast_manifest,
+            "integration",
+            state_path=fast_path,
+        )
+        fast_integration = bind(
+            "fast-integration",
+            "integration",
+            fast_integration_target,
+        )
+        cmd_integration(
+            argparse.Namespace(
+                state=str(fast_path),
+                verdict="accepted",
+                reviewer="agent:/root/fast-final",
+                evidence_file=str(fast_integration),
+                blocker=None,
+            )
+        )
+        assert load(fast_path)["status"] == "complete"
+        forged_fast = load(fast_path)
+        forged_fast["coverage"]["symbol:limited"]["risk"] = "high"
+        assert any(
+            "fast gate policy is not permitted" in error
+            for error in validate(forged_fast)
+        )
         trajectory = Path(f"{path}.events.jsonl")
         assert trajectory.is_file()
         events = [json.loads(line) for line in trajectory.read_text().splitlines()]
@@ -3915,9 +4252,10 @@ def parser() -> argparse.ArgumentParser:
 
     command = sub.add_parser("init")
     command.add_argument("state")
-    command.add_argument("--runtime", choices=["codex"], default="codex")
+    command.add_argument("--runtime", choices=["codex", "claude"], default="codex")
     command.add_argument("--mode", choices=["audit", "repair"], required=True)
-    command.add_argument("--max-iterations", type=int, default=10)
+    command.add_argument("--profile", choices=sorted(PROFILES), default="fast")
+    command.add_argument("--max-iterations", type=int)
     command.set_defaults(func=cmd_init)
 
     command = sub.add_parser("coverage")
@@ -3963,6 +4301,11 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--title", required=True)
     command.add_argument("--item", required=True)
     command.add_argument(
+        "--gate",
+        choices=["auto", "fast", "full"],
+        default="auto",
+    )
+    command.add_argument(
         "--decision-for-stage",
         choices=["plan", "fix", "integration"],
     )
@@ -3992,6 +4335,13 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--spec", required=True)
     command.add_argument("--note", default="documented")
     command.set_defaults(func=cmd_document)
+
+    command = sub.add_parser("waive-plan")
+    command.add_argument("state")
+    command.add_argument("--id", required=True)
+    command.add_argument("--evidence-file", required=True)
+    command.add_argument("--note", default="fast-profile plan review waiver")
+    command.set_defaults(func=cmd_waive_plan)
 
     command = sub.add_parser("annotate-resolution")
     command.add_argument("state")

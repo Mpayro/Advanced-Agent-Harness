@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "stage": {
+      "type": "string",
+      "enum": ["confirmation", "plan", "fix", "integration"]
+    },
+    "reviews": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^[A-Za-z0-9_.:-]+$"},
+          "target_artifact": {"type": "string", "minLength": 67},
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "CONFIRMED_BUG",
+              "NOT_A_BUG",
+              "NEEDS_DECISION",
+              "DUPLICATE",
+              "ACCEPTED",
+              "REJECTED"
+            ]
+          },
+          "reproduction": {"type": "string"},
+          "authority": {"type": "string"},
+          "negative_control": {"type": "string"},
+          "root_cause": {"type": "string"},
+          "plan": {"type": "string"},
+          "diff": {"type": "string"},
+          "tests": {"type": "string"},
+          "coverage": {"type": "string"},
+          "product_checks": {"type": "string"},
+          "interactions": {"type": "string"},
+          "counterevidence": {"type": "string"},
+          "remaining_uncertainty": {"type": "string"},
+          "blocker": {"type": "string"}
+        },
+        "required": [
+          "id",
+          "target_artifact",
+          "outcome",
+          "reproduction",
+          "authority",
+          "negative_control",
+          "root_cause",
+          "plan",
+          "diff",
+          "tests",
+          "coverage",
+          "product_checks",
+          "interactions",
+          "counterevidence",
+          "remaining_uncertainty",
+          "blocker"
+        ]
+      }
+    }
+  },
+  "required": ["stage", "reviews"]
+}
