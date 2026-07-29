@@ -1,0 +1,45 @@
+{
+  "_README": "OPTIONAL CLAUDE ADAPTER ONLY. Merge selected keys into ~/.claude/settings.json; never replace the file. Back it up first and remove every key starting with _ before saving.",
+
+  "_comment_hooks": "PreToolUse guard = no Fable subagents (Fable is the architect, not the worker). SessionStart = inject the ponytail posture into every session.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $HOME/.claude/hooks/fable_guard.py",
+            "timeout": 10,
+            "statusMessage": "Fable guard: no Fable subagents"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/posture_session_start.sh",
+            "statusMessage": "Activating ponytail",
+            "async": false
+          }
+        ]
+      }
+    ]
+  },
+
+  "_comment_compact": "Token budget before Claude Code auto-compacts the conversation. Higher = fewer context resets, more tokens per request. 750000 is a deliberate 'don't crash' setting for very long agent sessions; lower it (e.g. 450000) if you'd rather pay less.",
+  "autoCompactWindow": 750000,
+
+  "_comment_effort": "Reasoning depth. xhigh is deep but slower/pricier; 'high' is a fine default.",
+  "effortLevel": "xhigh",
+
+  "_comment_plugins": "Legacy optional Claude plugins. Current Codex workflow skills do not require these and use Superpowers only when explicitly requested.",
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true
+  }
+}

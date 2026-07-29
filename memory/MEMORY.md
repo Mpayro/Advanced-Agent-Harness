@@ -1,0 +1,4 @@
+- [Fable architect policy](fable-architect-policy.md) — Fable 5 plans, never works; Sonnet/Codex do the labor
+- [Subagent model policy](subagent-model-policy.md) — sonnet by default, enforced by the fable_guard hook, not by good intentions
+- [Ponytail default](ponytail-default.md) — laziest-correct-solution posture auto-injected every session
+- [Comm style](comm-style.md) — plain blocks: what → outcome → caveat

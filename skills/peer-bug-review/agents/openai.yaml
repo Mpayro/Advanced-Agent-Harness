@@ -1,0 +1,4 @@
+interface:
+  display_name: "Peer Bug Review"
+  short_description: "Swarm audit with adversarial bug proof"
+  default_prompt: "Use $peer-bug-review to audit this repository exhaustively, prove each real bug adversarially, and prepare reviewed fixes."

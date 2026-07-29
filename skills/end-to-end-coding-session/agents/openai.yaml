@@ -1,0 +1,4 @@
+interface:
+  display_name: "End-to-End Coding Session"
+  short_description: "Plan, goal, build, verify, stop before commit"
+  default_prompt: "Use $end-to-end-coding-session to plan this multi-stage change, get my approval, implement it on a branch, verify it, and stop before commit."
