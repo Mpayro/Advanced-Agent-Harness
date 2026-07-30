@@ -55,16 +55,22 @@ def remove_contract_phrase(text: str, phrase: str) -> str:
 BASE_PHRASES = (
     "Human-gated is the default",
     "Call `get_goal` before",
-    "`workflow_owner`, `living_plan`, and `terminal_contract`",
+    "`workflow_owner`, `living_plan`, `terminal_contract`, and",
     "do not overwrite, complete, or block it",
     "authorization for that persistent goal",
     "call `create_goal`",
+    "`goal_mode=persistent` or",
+    "`goal_mode=none`",
+    "Recommend `persistent`",
+    "Recommend `none`",
+    "Do not infer the choice",
+    "skip every `create_goal` and `update_goal` call",
     "inventory index and worktree dirt separately",
     "exact task-owned patch bytes",
     "validate it with `computer-use:computer-use` before Step 7",
     "temporary profile and remote debugging",
     "do not mark the UI verified",
-    "Call `update_goal(complete)` only",
+    "Only in `goal_mode=persistent`, call `update_goal(complete)`",
     "three consecutive goal turns",
     "living execution plan",
     "`terminal_peer_review_state`",
@@ -76,13 +82,20 @@ BASE_PHRASES = (
 AUTOMATIC_PHRASES = (
     "explicit-opt-in workflow",
     "does not invoke a nested base workflow",
-    "Replace its goal-timing and stop-before-commit disclosure",
+    "replace its goal timing and stop-before-commit disclosure",
     "explicitly confirms",
+    "goal mode",
     "eligibility-before-goal creation",
     "without creating an Automatic goal",
     "`workflow_owner=end-to-end-coding-session-automatic`",
     "auto-commit authority",
     "generic \"implement it\" is insufficient",
+    "Recommend `persistent`",
+    "Recommend `none`",
+    "Do not infer the choice",
+    "In `goal_mode=none`, never call `create_goal` or `update_goal`",
+    "Limit: ten plan-gate attempts",
+    "| Plan approval | 10 fresh reviewers |",
     "immutable `approved_plan_target`",
     "APPROVED_PLAN: <sha256> <canonical-path>",
     "mechanically compare both `APPROVED_PLAN` digest",
@@ -93,7 +106,7 @@ AUTOMATIC_PHRASES = (
     "require the base Step 6 Computer Use smoke",
     "temporary profile and remote debugging",
     "Do not advance to the code gate or auto-commit when required UI proof is missing",
-    "Call `update_goal(complete)` only",
+    "Only in `goal_mode=persistent`, call `update_goal(complete)`",
     "three consecutive goal turns",
     "Never auto-push or auto-merge",
 )
@@ -104,8 +117,8 @@ PEER_PHRASES = (
     "**Repair authorized:**",
     "Never infer Repair authority",
     "Do not recursively invoke",
-    "Use one fresh Terra reviewer by default",
-    "Use two parallel Terra reviewers only when their lanes are truly independent",
+    "Use one fresh Luna reviewer by default",
+    "Use two parallel Luna reviewers only when their lanes are truly independent",
     "Require non-empty content on every label's same physical line",
     "always save and SHA-256 hash the exact patch bytes",
     "review manifest containing that patch path/digest",
@@ -220,6 +233,7 @@ def main() -> int:
             r"\bsonnet\b",
             r"\bopus\b",
             r"\bhaiku\b",
+            r"\bterra\b",
             r"\bsol\b",
         ):
             if re.search(pattern, text, flags=re.IGNORECASE):
@@ -242,7 +256,7 @@ def main() -> int:
     if automatic.find("get_goal") > automatic.find("create the goal"):
         errors.append("automatic: goal creation appears before get_goal")
     if automatic.find("After consent and before goal creation") > automatic.find(
-        "If eligible, create the goal"
+        "If eligible and `goal_mode=persistent`, create the goal"
     ):
         errors.append("automatic: eligibility must precede goal creation")
     if inherits_base_step_one(automatic):
@@ -259,6 +273,8 @@ def main() -> int:
         mutation_control(base, phrase, BASE_PHRASES, "base", errors)
     for phrase in (
         "eligibility-before-goal creation",
+        "In `goal_mode=none`, never call `create_goal` or `update_goal`",
+        "Limit: ten plan-gate attempts",
         "immutable `approved_plan_target`",
         "atomically set it to `pending`",
         "after that gate accepts, set `completed`",
@@ -269,8 +285,8 @@ def main() -> int:
             automatic, phrase, AUTOMATIC_PHRASES, "automatic", errors
         )
     for phrase in (
-        "Use one fresh Terra reviewer by default",
-        "Use two parallel Terra reviewers only when their lanes are truly independent",
+        "Use one fresh Luna reviewer by default",
+        "Use two parallel Luna reviewers only when their lanes are truly independent",
         "Require non-empty content on every label's same physical line",
         "review manifest containing that patch path/digest",
         "canonical review manifest is the one target identity for dispatch and response",

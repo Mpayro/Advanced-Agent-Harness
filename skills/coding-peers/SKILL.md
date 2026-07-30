@@ -1,6 +1,6 @@
 ---
 name: coding-peers
-description: Use for a fast, bounded, independent Codex review of a small or settled but important plan, code diff, shared seam, generated artifact, or focused implementation result. It is read-only by default, uses one fresh Terra reviewer unless two genuinely independent risk lanes justify parallel review, verifies every claim locally, and never creates a goal, branch, or commit. Use end-to-end-coding-session for broad implementation and peer-bug-review for exhaustive unknown bug surfaces.
+description: Use for a fast, bounded, independent Codex review of a small or settled but important plan, code diff, shared seam, generated artifact, or focused implementation result. It is read-only by default, uses one fresh Luna reviewer unless two genuinely independent risk lanes justify parallel review, verifies every claim locally, and never creates a goal, branch, or commit. Use end-to-end-coding-session for broad implementation and peer-bug-review for exhaustive unknown bug surfaces.
 ---
 
 # Coding Peers
@@ -71,9 +71,9 @@ never a prose summary. A summary may explain intent but cannot replace the targe
 
 ## 3. Choose The Minimum Reviewer Set
 
-Use one fresh Terra reviewer by default.
+Use one fresh Luna reviewer by default.
 
-Use two parallel Terra reviewers only when their lanes are truly independent,
+Use two parallel Luna reviewers only when their lanes are truly independent,
 for example:
 
 - Persistence/conservation vs UI/accessibility.

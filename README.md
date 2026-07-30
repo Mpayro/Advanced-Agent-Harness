@@ -29,11 +29,11 @@ end-to-end coding session: add rate limiting to the public API
 
 The human-gated workflow:
 
-1. Routes the request and checks for an existing Codex goal.
+1. Routes the request and checks for existing Codex goal state.
 2. Reads the real repo path, callers, tests, instructions, branch, and dirty
    state before planning.
-3. Restates the objective and asks you to confirm its understanding and
-   persistent-goal authority.
+3. Restates the objective, recommends persistent goal for long/complex work or
+   no goal for simple/bounded work, and asks you to choose.
 4. Writes a living plan, has a fresh Codex reviewer attack it, and asks you to
    approve implementation.
 5. Implements the approved plan in an isolated worktree with failure-first
@@ -55,11 +55,12 @@ Run:
 end-to-end coding session automatic: migrate the auth middleware
 ```
 
-Automatic is explicit opt-in. It first checks that the task is deterministic,
-reversible, isolated, and fully provable. Fresh reviewers get up to three plan
-gates and three code gates. You still choose once whether to run Peer Bug
-Review. After acceptance it commits only the approved patch to the isolated
-branch; it never pushes or merges.
+Automatic is explicit opt-in. Its first alignment response also recommends and
+asks you to choose persistent goal or no goal. It then checks that the task is
+deterministic, reversible, isolated, and fully provable. Fresh reviewers get up
+to ten plan gates and three code gates. You still choose once whether to run
+Peer Bug Review. After acceptance it commits only the approved patch to the
+isolated branch; it never pushes or merges.
 
 ## Peer Bug Review
 
@@ -130,7 +131,8 @@ required for the Codex workflows.
 
 ## Requirements
 
-- Codex with subagents and goal support.
+- Codex with subagents; goal support is required only when persistent-goal mode
+  is selected.
 - Git for branch/worktree implementation flows.
 - Isolated Chrome with a temporary profile and remote debugging for UI smoke
   tests.

@@ -1,4 +1,4 @@
 interface:
   display_name: "Automatic End-to-End Coding"
-  short_description: "Goal, adversarial gates, branch auto-commit"
-  default_prompt: "Use $end-to-end-coding-session-automatic for this deterministic change and disclose the goal plus branch auto-commit before starting."
+  short_description: "Choose goal mode, gate, and auto-commit"
+  default_prompt: "Use $end-to-end-coding-session-automatic for this deterministic change, recommend and ask me to choose goal or no goal, and disclose branch auto-commit before starting."

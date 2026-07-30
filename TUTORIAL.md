@@ -10,8 +10,10 @@ The workflow first scans the real repo, then shows a compact alignment
 checklist: outcome, scope, non-goals, assumptions, constraints, acceptance
 evidence, and any ambiguity that changes behavior or authority.
 
-Confirm the interpretation and persistent-goal authority. No product files are
-edited yet.
+Confirm the interpretation and choose persistent goal or no goal. The workflow
+recommends a goal for long, complex, interruption-prone work and no goal for a
+simple bounded run, but it waits for your choice. No product files are edited
+yet.
 
 Next it writes and adversarially reviews a living plan. You get at most five
 plain-language bullets plus the saved plan path. Say `implement` only when the
@@ -40,13 +42,14 @@ verified result and stops before commit.
 end-to-end coding session automatic: migrate the email renderer
 ```
 
-Automatic requires explicit consent to a persistent goal and an isolated-branch
-auto-commit. It refuses tasks whose intent, source freshness, proof, isolation,
-or production boundary is unresolved.
+Automatic requires an explicit persistent-goal or no-goal choice plus
+isolated-branch auto-commit consent. It recommends a goal for long/complex work
+and no goal for simple/bounded work. It refuses tasks whose intent, source
+freshness, proof, isolation, or production boundary is unresolved.
 
 For an eligible task:
 
-- a fresh reviewer gets up to three attempts to approve the plan;
+- fresh reviewers get up to ten attempts to approve the latest corrected plan;
 - implementation and verification run without a plan checkpoint;
 - a fresh reviewer gets up to three attempts to approve the exact patch;
 - you still choose once whether to run heavy Peer Bug Review;
@@ -92,7 +95,7 @@ For one settled plan, diff, shared seam, or generated artifact:
 coding peers: review this exact patch
 ```
 
-This is read-only by default, uses one fresh Terra reviewer, freezes the exact
+This is read-only by default, uses one fresh Luna reviewer, freezes the exact
 artifact and SHA-256 identity, and verifies every finding locally. It does not
 create a goal, branch, or commit.
 

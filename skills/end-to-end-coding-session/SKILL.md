@@ -1,6 +1,6 @@
 ---
 name: end-to-end-coding-session
-description: Use when the user explicitly wants a multi-stage coding objective handled end to end with a human-approved plan, a living execution artifact, an authorized persistent Codex goal, isolated implementation, verification, adversarial review, one optional heavy Peer Bug Review choice, and a stop-before-commit handoff. Triggers include "end-to-end coding session", "handle this objective end to end", "plan it and implement after I approve", "use a persistent goal", and broad cross-module feature or refactor work. Do not use for a small bounded review, an explicitly automatic auto-commit workflow, or an exhaustive unknown bug hunt.
+description: Use when the user explicitly wants a multi-stage coding objective handled end to end with a human-approved plan, a living execution artifact, an explicit persistent-goal or no-goal choice, isolated implementation, verification, adversarial review, one optional heavy Peer Bug Review choice, and a stop-before-commit handoff. Triggers include "end-to-end coding session", "handle this objective end to end", "plan it and implement after I approve", "use a persistent goal", and broad cross-module feature or refactor work. Do not use for a small bounded review, an explicitly automatic auto-commit workflow, or an exhaustive unknown bug hunt.
 ---
 
 # End-to-End Coding Session
@@ -18,7 +18,8 @@ Use Ponytail full: understand the real flow, then make the smallest root-cause
 change. Use Superpowers skills only when the user explicitly requests them or the
 repo requires them.
 
-The outer session owns routing, goal state, and the terminal review state.
+The outer session owns routing, the selected goal mode, goal state when used, and
+the terminal review state.
 Sub-skills return bounded results; they do not start another outer workflow.
 
 ## Step 0/8 — Route And Check Existing State
@@ -40,16 +41,21 @@ An explicit request to use this full workflow overrides the small-task shortcut.
 Return a routing recommendation rather than recursively invoking another outer
 workflow.
 
-Call `get_goal` before proposing a new goal:
+Call `get_goal` before presenting a new goal-mode choice:
 
 - No unfinished goal: continue.
 - Matching unfinished goal: resume only when the objective also records the same
-  `workflow_owner`, `living_plan`, and `terminal_contract`; do not repeat
-  completed investigation or create another goal.
+  `workflow_owner`, `living_plan`, `terminal_contract`, and
+  `goal_mode=persistent`; do not repeat completed investigation, re-ask the
+  goal-mode question, or create another goal.
 - Same outcome but different workflow owner, plan identity, or terminal contract:
   treat it as a different unfinished goal.
 - Different unfinished goal: do not overwrite, complete, or block it. Stop for
   the user's explicit decision about that goal.
+
+If a matching living plan already records a user-selected `goal_mode=none`,
+resume from it without re-asking or touching goal state. Never change modes
+silently.
 
 Inspect repo instructions, current branch/worktree, and dirty state read-only.
 
@@ -59,7 +65,7 @@ Gather only the context needed to restate the objective:
 
 - For a localized or skill-only change, use one direct scan.
 - For broad or ambiguous repo work, use up to three complementary, read-only
-  Terra explorers: repo/instructions, code path/callers, and tests/tooling.
+  Luna explorers: repo/instructions, code path/callers, and tests/tooling.
 - For a true repo overview, use all three. Never create fake parallelism for the
   same question.
 - Reuse an installed repo index if present. Do not install one for this scan;
@@ -72,13 +78,25 @@ Present a compact checklist:
 - Assumptions and constraints.
 - Acceptance evidence.
 - Ambiguities that could change behavior or authority.
-- Persistent goal disclosure: this workflow proposes one Codex goal after plan
-  approval and will stop before commit.
+- Goal-mode disclosure: the user must choose `goal_mode=persistent` or
+  `goal_mode=none`; both modes keep the living plan and stop before commit.
 
-Ask the user to confirm both the interpretation and authorization for that
-persistent goal. Explicitly record the authorization for that persistent goal.
-This existing alignment gate is the goal-consent gate; do not
-add a separate ceremony. Do not edit product files yet.
+The first alignment response must recommend one mode and ask:
+
+`¿Quieres ejecutarlo con goal persistente o sin goal? Recomiendo <modo> porque <razón breve>.`
+
+- Recommend `persistent` when the work is long, complex, multi-stage,
+  cross-module, interruption-prone, or likely to span compaction.
+- Recommend `none` when the work is simple, bounded, low-risk, and likely to
+  finish in one continuous run.
+- Do not infer the choice from the recommendation. Wait for the user's explicit
+  selection.
+
+Ask the user to confirm the interpretation and goal mode in the same alignment
+gate. For `persistent`, explicitly record the authorization for that persistent
+goal. For `none`, record the opt-out and skip every `create_goal` and
+`update_goal` call. Do not add a separate goal ceremony. Do not edit product
+files yet.
 
 ## Step 2/8 — Orient And Preflight
 
@@ -118,9 +136,10 @@ The artifact must contain:
 - Ordered checkbox tasks and verification commands.
 - Progress, decisions, surprises/blockers, review rounds, and
   `terminal_peer_review_state`.
+- The user-selected `goal_mode` and its recommendation rationale.
 
 Use `coding-peers` as a read-only subprotocol on the full plan artifact. Use one
-fresh Terra reviewer by default; add a second parallel reviewer only for a
+fresh Luna reviewer by default; add a second parallel reviewer only for a
 distinct risk lane. The reviewer receives the real plan, not a coordinator
 summary, and tries to refute hidden scope, missing tests, business/data risk,
 and simpler alternatives.
@@ -138,13 +157,14 @@ Do not edit product code until the user approves.
 
 After approval:
 
-1. Re-run `get_goal`.
-2. If no unfinished goal exists, call `create_goal` using the Step-1-authorized
-   objective: outcome, in/out scope, acceptance evidence, and the pre-commit
-   terminal condition. Include `workflow_owner=end-to-end-coding-session`, the
-   canonical `living_plan` path, and that `terminal_contract`.
-3. If the matching goal exists, resume it.
-4. If a different goal exists, stop for the user.
+- For `goal_mode=persistent`, re-run `get_goal`. If no unfinished goal exists,
+  call `create_goal` using the Step-1-authorized objective: outcome, in/out scope,
+  acceptance evidence, and the pre-commit terminal condition. Include
+  `workflow_owner=end-to-end-coding-session`, `goal_mode=persistent`, the
+  canonical `living_plan` path, and that `terminal_contract`. Resume an exact
+  match; stop for the user if a different goal exists.
+- For `goal_mode=none`, do not call `create_goal`, `update_goal`, or any
+  goal-state mutation. Continue from the living plan and isolated worktree.
 
 Never set `token_budget` unless the user supplied one.
 
@@ -226,7 +246,7 @@ Freeze the actual review target:
 - Non-git files: canonical paths plus SHA-256 manifest.
 - Generated output: artifact plus provenance and acceptance metrics.
 
-Dispatch a fresh Terra reviewer with no prior conclusions. Require review of the
+Dispatch a fresh Luna reviewer with no prior conclusions. Require review of the
 real target and any required Computer Use evidence for correctness, missed
 requirements, security/data risk, over-engineering, and missing proof. Apply
 Ponytail review to remove speculative layers.
@@ -259,11 +279,14 @@ exact verification, remaining risk, heavy-review outcome, branch/dirty state,
 the saved task-owned patch, explicitly excluded unrelated dirt, and the proposed
 commit/push/merge steps. Ask before commit.
 
-Call `update_goal(complete)` only when the tested/reviewed branch and resolved
-heavy-review choice have reached this pre-commit terminal condition.
-Call `update_goal(blocked)` only after the same real blocker recurs for at least
-three consecutive goal turns. A blocked terminal review state alone does not
-authorize a blocked goal transition.
+Only in `goal_mode=persistent`, call `update_goal(complete)` when the
+tested/reviewed branch and resolved heavy-review choice have reached this
+pre-commit terminal condition. Call `update_goal(blocked)` only after the same
+real blocker recurs for at least three consecutive goal turns. A blocked
+terminal review state alone does not authorize a blocked goal transition.
+
+In `goal_mode=none`, never call `update_goal`; report the equivalent workflow
+terminal or blocked state without creating goal state.
 
 ## Loop Limits
 
@@ -275,8 +298,9 @@ authorize a blocked goal transition.
 | External peer, if explicitly requested | 1 retry | Repeated empty/error/timeout |
 | Heavy Peer Bug Review | 1 offer, 1 embedded run | Declined, completed, or blocked |
 
-Repeat only the failed stage. Resume from the living plan after compaction; never
-restart the whole workflow unless the user's objective changes.
+Repeat only the failed stage. Resume from the living plan after compaction and
+from the goal only in `goal_mode=persistent`; never restart the whole workflow
+unless the user's objective changes.
 
 ## Final Response
 
@@ -286,7 +310,8 @@ Include:
 - Verified: exact commands and smoke paths.
 - Remaining risk or unavailable proof.
 - Heavy Peer Bug Review state/verdict.
-- Goal state.
+- Goal mode and goal state; report `not used by user choice` for
+  `goal_mode=none`.
 - Branch and dirty/clean state.
 - Proposed commit, push/PR/merge, and cleanup plan.
 - Skill-use summary: followed, changed/skipped with reason, loop counts, what

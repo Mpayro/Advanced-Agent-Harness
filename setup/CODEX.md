@@ -1,7 +1,8 @@
 # Codex runtime
 
 The current workflow skills in this bundle are Codex-only. They rely on Codex
-subagents, persistent goals, task-path identities, and the local approval model.
+subagents, task-path identities, the local approval model, and persistent goals
+only when the user selects that mode.
 
 ## Install and verify
 
@@ -22,8 +23,7 @@ when you need to inspect it.
 The skills describe roles instead of pinning versioned model slugs:
 
 - a low-cost explorer for bounded discovery;
-- Terra for substantial coding and normal independent review;
-- the strongest permitted fresh Codex reviewer for high-risk gates.
+- Luna for substantial coding and every independent or adversarial review gate.
 
 The active runtime and repository instructions decide which exact models are
 available. Never route work to another provider merely because an old package
@@ -32,7 +32,8 @@ mentioned one.
 ## Required capabilities
 
 - Git branches and linked worktrees for implementation flows.
-- Persistent goal tools for explicitly authorized long workflows.
+- Persistent goal tools when the user explicitly selects goal mode; bounded
+  workflows can run without them.
 - Fresh Codex subagents for independent lanes and adversarial gates.
 - Python 3 for validators and the Peer Bug Review ledger.
 - Isolated Chrome with a temporary profile and remote debugging for UI proof.
