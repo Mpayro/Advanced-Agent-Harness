@@ -153,6 +153,30 @@ Say plainly, without softening:
 Lead with the largest gap. If a category is genuinely empty, say so — silence is
 not information. Never end a handoff whose only shape is what went well.
 
+## The summary gets reviewed too
+
+Draft the handoff, then hand the draft plus the real change and its evidence to
+one fresh peer before the user sees it. You wrote the work, so you are the worst
+judge of what the write-up quietly leaves out.
+
+Ask it for exactly that: what the summary omits, softens, or overclaims — above
+all in what is not done. Anything it adds that you verify goes into the summary.
+This is one cheap pass, not another review round; the code was already reviewed.
+
+## Then say it simply
+
+What lands in chat is short and plain. A few lines, ordinary words, no tables, no
+dumps of evidence:
+
+- What now works that did not.
+- What it means for the person reading, not what you did to get there.
+- What is missing or unproven — the honest part, kept honest.
+
+No step-by-step, no method, no file inventory, no counts of reviews and rounds.
+The plan, the diff, the evidence and the full gap list already exist as
+artifacts; offer them in one line. If the user wants to go deeper, that is their
+next message, not your current one.
+
 ## Handoff
 
 Coverage by lane with its honest exclusions. Confirmed bugs, rejected candidates,

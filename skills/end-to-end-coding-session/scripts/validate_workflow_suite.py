@@ -101,6 +101,11 @@ BASE_PHRASES = (
     "Asked for and not built",
     "Looks done and is not",
     "Never end a handoff whose only shape is what went well",
+    # The summary is reviewed before the user sees it, then kept short.
+    "The summary gets reviewed too",
+    "you are the worst judge of what the write-up quietly leaves out",
+    "What lands in chat is short and plain",
+    "that is their next message, not your current one",
     # Process skills belong inside the beats.
     "Superpowers along the way",
     "superpowers:brainstorming",
@@ -147,6 +152,8 @@ AUTOMATIC_PHRASES = (
     "Nobody is watching this run, which is the reason to follow them",
     "The user reads a finished report as a finished feature",
     "Never end a handoff whose only shape is what went well",
+    "The summary gets reviewed too",
+    "What lands in chat is short and plain",
 )
 
 PEER_PHRASES = (
@@ -208,6 +215,8 @@ PEER_BUG_PHRASES = (
     "The user reads a finished report as a finished audit",
     "Surfaces nobody looked at",
     "is a lie told by omission",
+    "The summary gets reviewed too",
+    "What lands in chat is short and plain",
     "Never end a handoff whose only shape is what went well",
     "it stops the run from claiming coverage",
     "Repeat only the stage that failed",
@@ -354,6 +363,12 @@ def main() -> int:
         "Ask before commit",
     ):
         errors.append("base: the browser check is not the last verification")
+    if ordered_wrong(
+        base,
+        "The summary gets reviewed too",
+        "What lands in chat is short and plain",
+    ):
+        errors.append("base: the summary is delivered before it is reviewed")
 
     errors.extend(contract_errors(automatic, AUTOMATIC_PHRASES, "automatic"))
     if ordered_wrong(
