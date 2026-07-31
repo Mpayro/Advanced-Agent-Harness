@@ -82,11 +82,10 @@ Mirror the same selected folders under:
 ~/.claude/skills/<name>
 ```
 
-The current end-to-end and Peer Bug Review workflows are Codex-only; this
-mirror is maintained for version consistency and future runtime adapters. Do
-not rewrite provider names blindly. If a runtime-specific variant already
-exists, preserve its intentional boundary wording and verify the differences
-explicitly.
+The workflows run in either harness: `coding-peers` §3b resolves peers, models,
+and tools from the harness detected at runtime, so both copies stay byte
+identical. Keep them that way — the validator fails a stale mirror. Do not
+rewrite provider names by hand; §3b is the only place a peer is named.
 
 The optional files in `hooks/` and `memory/` are Claude-side extras. Install
 them only if the user explicitly wants the Fable guard or always-on Ponytail

@@ -7,9 +7,11 @@ description: Use only when the user explicitly requests the autonomous variant o
 
 ## Boundary
 
-This is a Codex-only, explicit-opt-in workflow. Never route work to another model
-provider. It applies the `end-to-end-coding-session` contract by reference; it
-does not invoke a nested base workflow.
+This is an explicit-opt-in workflow that runs in either harness. Peers, models,
+and tools resolve from `coding-peers` §3b for the harness detected at runtime;
+never route work to a provider outside it and External Peers. It applies the
+`end-to-end-coding-session` contract by reference; it does not invoke a nested
+base workflow.
 
 The outer session owns routing, the living plan, the selected persistence mode,
 the continuation handle when used, reviewer iterations,
@@ -205,7 +207,7 @@ three code-gate attempts. Do not commit a rejected diff.
 After approval, if `terminal_peer_review_state` is absent, atomically set it to
 `pending` and ask exactly once:
 
-`¿Quieres correr ahora Peer Bug Review pesado antes del commit? Audita el cambio y sus superficies afectadas con inventario, probes y agentes Codex adversariales; puede tardar y consumir bastantes tokens. Responde sí o no.`
+`¿Quieres correr ahora Peer Bug Review pesado antes del commit? Audita el cambio y sus superficies afectadas con inventario, probes y revisión adversarial; puede tardar y consumir bastantes tokens. Responde sí o no.`
 
 The outer session owns `terminal_peer_review_state`:
 

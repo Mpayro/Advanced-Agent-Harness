@@ -1,6 +1,6 @@
 ---
 name: coding-peers
-description: Use for a fast, bounded, independent Codex review of a small or settled but important plan, code diff, shared seam, generated artifact, or focused implementation result. It is read-only by default, asks which adversarial peer to use and dispatches one fresh reviewer unless two genuinely independent risk lanes justify parallel review, verifies every claim locally, and never creates a goal, branch, or commit. Use end-to-end-coding-session for broad implementation and peer-bug-review for exhaustive unknown bug surfaces.
+description: Use for a fast, bounded, independent peer review of a small or settled but important plan, code diff, shared seam, generated artifact, or focused implementation result. It is read-only by default, asks which adversarial peer to use and dispatches one fresh reviewer unless two genuinely independent risk lanes justify parallel review, verifies every claim locally, and never creates a goal, branch, or commit. Use end-to-end-coding-session for broad implementation and peer-bug-review for exhaustive unknown bug surfaces.
 ---
 
 # Coding Peers
@@ -16,8 +16,10 @@ which peer does the work.
 - Do not delegate implementation by default.
 - The outer orchestrator owns routing and mutations.
 - A peer finding is a hypothesis until reproduced against code/runtime.
-- Never route work to another model provider unless the user explicitly requests
-  a named external peer and the data-boundary gate allows it.
+- Runs in either harness. §3b resolves every peer, tool, and model from the
+  harness actually detected at runtime, never from where this file is installed.
+- Never route work to a provider outside §3b and External Peers unless the user
+  explicitly names one and the data-boundary gate allows it.
 
 ## Route Before Reviewing
 
@@ -106,6 +108,7 @@ points here.
 | Adversarial or independent review gate | ask each time: Sol or an adversarial Opus subagent | Sol (`gpt-5.6-sol`) |
 | Bulk bug-review labor: explorers, verifiers, batches | Sonnet subagents | Luna (`gpt-5.6-luna`) |
 | Heavy coding / implementation | Sonnet subagents, reviewed by Opus | Terra (`gpt-5.6-terra`) |
+| UI product proof | `claude-in-chrome` | `computer-use:computer-use` |
 
 Sonnet and Luna are the same tier. Which one does the work is decided by the
 harness you are running in, never by the task. Terra is the Codex peer only;
@@ -216,8 +219,8 @@ violate the business objective after a later manual/filler step.
 ### UI product proof
 
 If the reviewed result builds or alters UI, or its changed behavior is reviewable
-through a running UI, validate it with `computer-use:computer-use` before the
-verdict:
+through a running UI, validate it with the harness's UI proof tool from §3b
+before the verdict:
 
 - Launch Chrome with a temporary profile and remote debugging; do not reuse the
   user's normal browser profile.
@@ -260,10 +263,11 @@ instructions.
 
 - File present: external consultation is part of the run. Say which peers you
   will consult.
-- File absent: say so once, at the start, and point to `setup/NVIDIA-KEYS.md`
-  for how to set it up. Then continue without them and mark the external
-  perspective unavailable in the verdict. Never discover this at the review
-  gate — by then the user has already waited for the whole run.
+- File absent: in the opening gate, tell the user once to create it and point
+  to `setup/NVIDIA-KEYS.md`. Say plainly that it is optional and they can ignore
+  it. Then continue — never block, never ask again this run — and mark the
+  external perspective unavailable in the verdict. Never discover a missing key
+  at the review gate; by then the user has waited for the whole run.
 
 Every send:
 

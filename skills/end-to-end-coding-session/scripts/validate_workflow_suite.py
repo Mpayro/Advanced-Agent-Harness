@@ -67,7 +67,7 @@ BASE_PHRASES = (
     "skip every `create_goal` and `update_goal` call",
     "inventory index and worktree dirt separately",
     "exact task-owned patch bytes",
-    "validate it with `computer-use:computer-use` before Step 7",
+    "validate it with the harness's UI proof tool from `coding-peers` §3b before Step 7",
     "temporary profile and remote debugging",
     "do not mark the UI verified",
     "Only in `goal_mode=persistent`, call `update_goal(complete)`",
@@ -124,7 +124,7 @@ PEER_PHRASES = (
     "review manifest containing that patch path/digest",
     "canonical review manifest",
     "canonical review manifest is the one target identity for dispatch and response",
-    "validate it with `computer-use:computer-use` before the verdict",
+    "validate it with the harness's UI proof tool from §3b before the verdict",
     "temporary profile and remote debugging",
     "do not accept the UI claim as verified",
     "Under Review-only authority",
@@ -269,7 +269,7 @@ def main() -> int:
     for phrase in (
         "do not overwrite, complete, or block it",
         "inventory index and worktree dirt separately",
-        "validate it with `computer-use:computer-use` before Step 7",
+        "validate it with the harness's UI proof tool from `coding-peers` §3b before Step 7",
     ):
         mutation_control(base, phrase, BASE_PHRASES, "base", errors)
     for phrase in (
@@ -291,7 +291,7 @@ def main() -> int:
         "Require non-empty content on every label's same physical line",
         "review manifest containing that patch path/digest",
         "canonical review manifest is the one target identity for dispatch and response",
-        "validate it with `computer-use:computer-use` before the verdict",
+        "validate it with the harness's UI proof tool from §3b before the verdict",
     ):
         mutation_control(peers, phrase, PEER_PHRASES, "coding-peers", errors)
     split_response = peers.replace(

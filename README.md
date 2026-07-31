@@ -127,13 +127,13 @@ The installer must inspect existing skills first, back up collisions, install
 the selected folders under `~/.codex/skills`, keep the `.claude` mirrors
 aligned, and run the bundled validators.
 
-The workflow skills are Codex-only. The optional files under `hooks/` and
+The workflow skills run in either harness; `coding-peers` §3b resolves peers and tools from the one detected at runtime. The optional files under `hooks/` and
 `memory/` are retained for people who also use Claude Code; they are not
 required for the Codex workflows.
 
 ## Requirements
 
-- Codex with subagents. Persistent continuation needs a handle the harness
+- Either harness, with subagents. Persistent continuation needs a handle the harness
   actually has — goal tools, or `/loop` — and only when that mode is selected.
 - Git for branch/worktree implementation flows.
 - Isolated Chrome with a temporary profile and remote debugging for UI smoke

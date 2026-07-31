@@ -1,8 +1,9 @@
 # Codex runtime
 
-The current workflow skills in this bundle are Codex-only. They rely on Codex
-subagents, task-path identities, the local approval model, and persistent goals
-only when the user selects that mode.
+This file covers the Codex side of the bundle: the CLI, its subagents, task-path
+identities, the local approval model, and persistent goals when the user selects
+that mode. The workflow skills themselves run in either harness — install Codex
+to get Sol, Terra, and Luna as peers, and to review from a second provider.
 
 ## Install and verify
 
@@ -44,7 +45,8 @@ smoke as a passing test.
 
 ## Claude mirror
 
-The installer keeps matching folders under `~/.claude/skills` because this
-workspace requires skill mirrors to remain aligned. That mirror does not make a
-Codex-only workflow executable in Claude. Runtime-specific provider boundaries
-must be preserved explicitly.
+The installer keeps matching folders under `~/.claude/skills`, byte identical to
+the Codex copies — the validator fails a stale mirror. They are identical
+because the skills are harness-neutral: `coding-peers` §3b resolves the peer,
+model, and tool from whichever harness is running. Without Codex installed, the
+adversarial gate falls to an Opus subagent and the rest still works.

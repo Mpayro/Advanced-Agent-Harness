@@ -7,9 +7,11 @@ description: Use when the user explicitly wants a multi-stage coding objective h
 
 ## Boundary
 
-This is a Codex-only, human-gated workflow. Human-gated is the default for long
-work. Never route work to another model provider. Respect stricter user, repo,
-data, and model rules.
+This is a human-gated workflow that runs in either harness. Human-gated is the
+default for long work. The `coding-peers` §3b table resolves every peer, model,
+and tool from the harness detected at runtime; never route work to a provider
+outside it and External Peers. Respect stricter user, repo, data, and model
+rules.
 
 The workflow produces a tested, reviewed branch and stops before commit. It asks
 exactly once whether to run the optional heavy `peer-bug-review`.
@@ -205,7 +207,7 @@ Never set `token_budget` unless the user supplied one.
 
 ## Step 5/8 — Implement On An Isolated Branch
 
-Create or confirm a safe `codex/<short-goal>` linked worktree unless the user or
+Create or confirm a safe `agent/<short-goal>` linked worktree unless the user or
 repo explicitly requires in-place work. Merely switching branches in a dirty
 worktree is not isolation. Preserve unrelated dirt.
 
@@ -247,7 +249,8 @@ Map every acceptance claim to evidence:
   measurable business invariants.
 
 If the implementation builds or alters UI, or the changed behavior is reviewable
-through a running UI, validate it with `computer-use:computer-use` before Step 7:
+through a running UI, validate it with the harness's UI proof tool from
+`coding-peers` §3b before Step 7:
 
 - Launch Chrome with a temporary profile and remote debugging; never reuse the
   user's normal browser profile for this smoke.
@@ -302,7 +305,7 @@ The outer session owns `terminal_peer_review_state`.
 
 If absent, atomically set it to `pending` and ask exactly once:
 
-`¿Quieres correr ahora Peer Bug Review pesado antes del commit? Audita el cambio y sus superficies afectadas con inventario, probes y agentes Codex adversariales; puede tardar y consumir bastantes tokens. Responde sí o no.`
+`¿Quieres correr ahora Peer Bug Review pesado antes del commit? Audita el cambio y sus superficies afectadas con inventario, probes y revisión adversarial; puede tardar y consumir bastantes tokens. Responde sí o no.`
 
 - While `pending`, wait. Do not ask again, commit, or claim completion.
 - On **no**, set `declined`.
