@@ -89,6 +89,58 @@ Use higher reasoning for auth, money, security, destructive operations, state
 machines, or cross-module data contracts. Use lower reasoning for a small
 localized review.
 
+## 3b. Runner — How To Invoke Codex
+
+This is the only place model slugs are pinned. Every other skill points here.
+
+| Role | Slug |
+|---|---|
+| Heavy coding / implementation | `gpt-5.6-terra` |
+| Adversarial or independent review | `gpt-5.6-sol` |
+| Cheap discovery / bulk verification | `gpt-5.6-luna` |
+
+Canonical read-only review call:
+
+```bash
+codex exec \
+  --ignore-user-config \
+  -m <slug> \
+  -c 'model_reasoning_effort="medium"' \
+  --ephemeral \
+  -s read-only \
+  --skip-git-repo-check \
+  -C <repo> \
+  < <packet.md> > <out.txt> 2>&1
+```
+
+- **Never pipe the output.** `| tail`, `| head`, `| grep` hold everything until
+  the process exits, so a live run and a dead one look identical. Redirect to a
+  file and watch its byte count.
+- **Prompt over stdin** (`< packet.md`), not `"$(cat packet.md)"` in argv.
+- **Pin `-m` and `model_reasoning_effort`.** Without both, the call silently
+  inherits `~/.codex/config.toml` — today `gpt-5.6-sol` at `xhigh`, the slowest
+  and costliest combination available.
+- `--ignore-user-config` also drops the user's plugins, MCP servers, and hooks.
+  Use it for every read-only reviewer; omit it only for an owned
+  `workspace-write` task.
+
+### Is it working or stuck?
+
+Two valid signals: the output file's byte count is still growing (`wc -c`), and
+`pgrep -f 'codex exec'` still returns the vendored binary.
+
+These signals are dead — never conclude anything from them:
+
+- `~/.codex/sessions/` — Codex stopped writing rollouts there on 2026-07-23;
+  state lives in `~/.codex/state_*.sqlite`. A healthy run leaves nothing there.
+- `%CPU` from `ps` — a lifetime average. A run streaming a long reasoning turn
+  sits near 0% while perfectly alive.
+- `ps ... | grep -i codex` — the ChatGPT desktop app's helper processes match
+  the same pattern and bury the real one.
+
+A review at high reasoning against a real repo runs for tens of minutes and
+prints nothing for long stretches. Do not kill it while its output file grows.
+
 ## 4. Demand Structured Evidence
 
 Require non-empty content on every label's same physical line:

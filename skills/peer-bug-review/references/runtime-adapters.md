@@ -12,22 +12,29 @@
 
 ## Codex local Luna runner
 
-If the thread subagent tool does not expose Luna, use the validated local runner:
+If the thread subagent tool does not expose Luna, use the validated local runner.
+Flags, model slugs, and the liveness rules come from the `coding-peers` Runner
+section — read it before dispatching. This adds only the batch-schema wrapper:
 
 ```bash
 codex exec \
   --ignore-user-config \
-  -m gpt-5.6-luna \
+  -m <cheap-discovery slug from coding-peers> \
   -c 'model_reasoning_effort="medium"' \
   --ephemeral \
   -s read-only \
+  --skip-git-repo-check \
   -C <repo> \
   --output-schema <skill>/references/review-output.schema.json \
   -o <batch-result.json> \
-  < <batch-prompt.txt>
+  < <batch-prompt.txt> > <runner-log.txt> 2>&1
 python3 <skill>/scripts/render_review_batch.py \
   <batch-result.json> <evidence-directory>
 ```
+
+Never pipe a runner through `head`/`tail`/`grep`: it hides the run until exit and
+makes a working reviewer look hung. Judge liveness by growth of the log file, not
+by `~/.codex/sessions`, `%CPU`, or a `grep -i codex` process match.
 
 `--ignore-user-config` avoids loading unrelated personal plugins/hooks while keeping
 Codex authentication. Because those instructions are not inherited, embed the

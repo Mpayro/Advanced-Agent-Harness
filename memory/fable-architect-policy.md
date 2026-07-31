@@ -26,6 +26,8 @@ Fable root, plus guardrails that only existed as advice in text.
 - `autoCompactWindow: 750000` in settings.json is the "don't crash on a long
   session" setting. It is deliberately expensive; a lower value (~450000) costs
   less and compacts more often. Pick knowingly.
+- Launching Codex: canonical call and liveness rules in
+  [[codex-exec-invocation]]. Never pipe its output.
 - Babysit external/background work with a lean Sonnet subagent or the Monitor
   tool — never wake the fat Fable root per result. Batch delegations, collect
   once. Prefer Monitor over `/loop` polling; keep any fixed poll under 5 minutes

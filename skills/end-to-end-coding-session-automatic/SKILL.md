@@ -114,7 +114,9 @@ Run base Orient/Preflight and create the same living execution plan with:
 - `terminal_peer_review_state`.
 
 Use `coding-peers` only as a read-only subprotocol. Reviewers receive exact
-artifacts, never the coordinator's summary.
+artifacts, never the coordinator's summary. Dispatch every reviewer in this
+workflow through the `coding-peers` Runner section — its call shape, model
+slugs, and liveness rules are binding here.
 
 ## Step 4 Override — Adversarial Plan Gate
 

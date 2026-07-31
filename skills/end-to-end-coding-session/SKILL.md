@@ -269,7 +269,8 @@ Freeze the actual review target:
 - Non-git files: canonical paths plus SHA-256 manifest.
 - Generated output: artifact plus provenance and acceptance metrics.
 
-Dispatch a fresh Luna reviewer with no prior conclusions. Require review of the
+Dispatch a fresh Luna reviewer with no prior conclusions, using the `coding-peers`
+Runner section for the exact call and its liveness rules. Require review of the
 real target and any required Computer Use evidence for correctness, missed
 requirements, security/data risk, over-engineering, and missing proof. Apply
 Ponytail review to remove speculative layers.

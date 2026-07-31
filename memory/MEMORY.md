@@ -2,3 +2,4 @@
 - [Subagent model policy](subagent-model-policy.md) — sonnet by default, enforced by the fable_guard hook, not by good intentions
 - [Ponytail default](ponytail-default.md) — laziest-correct-solution posture auto-injected every session
 - [Comm style](comm-style.md) — plain blocks: what → outcome → caveat
+- [Codex exec invocation](codex-exec-invocation.md) — never pipe its output; the sessions dir, %CPU, and grep all lie about liveness
