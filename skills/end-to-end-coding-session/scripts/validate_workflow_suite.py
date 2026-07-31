@@ -14,6 +14,7 @@ NAMES = (
     "end-to-end-coding-session",
     "end-to-end-coding-session-automatic",
     "coding-peers",
+    "peer-bug-review",
 )
 
 
@@ -31,9 +32,23 @@ def inherits_base_step_one(text: str) -> bool:
         )
     )
 
-
 def flat(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+def ordered_wrong(text: str, first: str, second: str) -> bool:
+    """True when `second` precedes `first`, or either anchor is missing.
+
+    Compares flattened text because the contract lists are checked against
+    flat() too: a raw .find() returns -1 for any anchor that wraps across a
+    line, and -1 > -1 is False, so the comparison would pass while asserting
+    nothing. A missing anchor is reported as a violation rather than ignored,
+    so a rename can never silently disarm the check.
+    """
+    flattened = flat(text)
+    a, b = flattened.find(first), flattened.find(second)
+    if a < 0 or b < 0:
+        return True
+    return a > b
 
 
 def contract_errors(
@@ -76,6 +91,12 @@ BASE_PHRASES = (
     "`terminal_peer_review_state`",
     "`coding-peers`; no handle",
     "Touching production is scope, not a forbidden category",
+    "Commit authority is not release authority; never infer one from the other",
+    "The user authorized that exact action for this run, naming it",
+    "It is reversible, or its irreversibility was disclosed and accepted",
+    "Release steps, whenever the objective plausibly reaches production",
+    "Ask before commit",
+    "Do not commit, push, merge, deploy, promote, or migrate unless the user",
     "A plan that never mentions production does not acquire it later",
     "`end-to-end-coding-session-automatic`",
     "`peer-bug-review`",
@@ -112,8 +133,9 @@ AUTOMATIC_PHRASES = (
     "three consecutive handle turns",
     "Commit authority is not release authority",
     # A release the consent gate authorized must have a step that performs it.
-    "Reject the plan outright when the consent gate named a release action",
-    "a release step is never reported as proposed once its authorization was consumed",
+    "The plan contains a production, destructive, or irreversible step the consent gate never named",
+    "the plan does not carry that action's rollback and verification",
+    "A release step the consent gate named is never reported as proposed",
     # Ordering-check anchors: asserted here so a rename cannot turn the
     # comparisons below into -1 > -1 and pass vacuously.
     "read the continuation handle before the first alignment",
@@ -140,6 +162,37 @@ PEER_PHRASES = (
     "do not accept the UI claim as verified",
     "Under Review-only authority",
     "Under Repair authority",
+)
+
+PEER_BUG_PHRASES = (
+    # Honesty about what a bug hunt can promise.
+    "Promise evidence discipline, not mathematical absence of bugs",
+    "all enumerated surfaces were covered and all candidates were classified",
+    "Never convert exhaustion into acceptance",
+    # Model routing stays in one place.
+    "Slugs live only in `coding-peers` §3b; never pin a version here",
+    "Detect the harness from the runtime, not the skill path",
+    # Authority.
+    "a review request alone is not edit authorization",
+    "Explorers report `CANDIDATE`, never `BUG`, and never edit",
+    # Coverage cannot be improvised or back-filled.
+    "Never start with random file sampling",
+    "Candidates may only be added after that freeze",
+    "Reserve one concurrency slot for the coordinator",
+    # Blind confirmation.
+    "Do not provide the finder\u2019s conclusion or intended fix",
+    "Only `CONFIRMED_BUG` advances to planning",
+    "Tests and old docs are evidence, not automatic product truth",
+    "the ledger rejects logical-identity, response-evidence, or frozen-target reuse",
+    "Never normalize an agent verdict manually",
+    "the post-fix review remains mandatory",
+    # Repair discipline.
+    "Reproduce RED on the baseline",
+    "Verify every reviewer claim locally before changing code",
+    "Serialize bugs that share files, state, schema, or business invariants",
+    "It is diagnostic evidence, not an approval authority",
+    "Do not restart the whole workflow when one stage fails",
+    "Do not expose the oracle to audit agents",
 )
 
 PEER_RESPONSE_LABELS = (
@@ -261,30 +314,43 @@ def main() -> int:
     peers = texts.get("coding-peers", "")
 
     errors.extend(contract_errors(base, BASE_PHRASES, "base"))
-    if base.find("Read the continuation handle before") > base.find(
-        "explicitly record the authorization to open"
+    if ordered_wrong(
+        base,
+        "Read the continuation handle before",
+        "explicitly record the authorization to open",
     ):
         errors.append("base: the handle is opened before it is read")
 
     errors.extend(contract_errors(automatic, AUTOMATIC_PHRASES, "automatic"))
-    if automatic.find(
-        "read the continuation handle before the first alignment"
-    ) > automatic.find("open the handle. Record outcome"):
+    if ordered_wrong(
+        automatic,
+        "read the continuation handle before the first alignment",
+        "open the handle. Record outcome",
+    ):
         errors.append("automatic: the handle is opened before it is read")
-    if automatic.find("After consent and before opening the handle") > automatic.find(
-        "If eligible and `persistence_mode=persistent`, open the handle"
+    if ordered_wrong(
+        automatic,
+        "After consent and before opening the handle",
+        "If eligible and `persistence_mode=persistent`, open the handle",
     ):
         errors.append("automatic: eligibility must precede opening the handle")
     if inherits_base_step_one(automatic):
         errors.append("automatic: inherits contradictory base Step-1 disclosure")
 
     errors.extend(contract_errors(peers, PEER_PHRASES, "coding-peers"))
+    errors.extend(
+        contract_errors(
+            texts.get("peer-bug-review", ""), PEER_BUG_PHRASES, "peer-bug-review"
+        )
+    )
     errors.extend(peer_response_errors(peers))
 
     for phrase in (
         "do not overwrite, complete, or close it",
         "inventory index and worktree dirt separately",
         "A plan that never mentions production does not acquire it later",
+        "Commit authority is not release authority; never infer one from the other",
+        "Release steps, whenever the objective plausibly reaches production",
         "validate it with the harness's UI proof tool from `coding-peers` §3b before Step 7",
     ):
         mutation_control(base, phrase, BASE_PHRASES, "base", errors)
@@ -297,7 +363,7 @@ def main() -> int:
         "after that gate accepts, set `completed`",
         "sole staging input",
         "Do not advance to the code gate or auto-commit when required UI proof is missing",
-        "a release step is never reported as proposed once its authorization was consumed",
+        "A release step the consent gate named is never reported as proposed",
     ):
         mutation_control(
             automatic, phrase, AUTOMATIC_PHRASES, "automatic", errors
@@ -311,6 +377,19 @@ def main() -> int:
         "validate it with the harness's UI proof tool from §3b before the verdict",
     ):
         mutation_control(peers, phrase, PEER_PHRASES, "coding-peers", errors)
+    for phrase in (
+        "Never convert exhaustion into acceptance",
+        "a review request alone is not edit authorization",
+        "Candidates may only be added after that freeze",
+        "Verify every reviewer claim locally before changing code",
+    ):
+        mutation_control(
+            texts.get("peer-bug-review", ""),
+            phrase,
+            PEER_BUG_PHRASES,
+            "peer-bug-review",
+            errors,
+        )
     split_response = peers.replace(
         "FINDINGS: concise same-line summary or none",
         "FINDINGS:\nconcise summary or none",
@@ -318,6 +397,37 @@ def main() -> int:
     )
     if split_response == peers or not peer_response_errors(split_response):
         errors.append("validator: split response-line self-control failed")
+
+    # Ordering self-control. A contract list cannot prove an ordering check
+    # bites, so prove it here: an inversion must be caught, a wrapped anchor
+    # must be caught, and the correct order must pass.
+    if (
+        ordered_wrong("... beta ... alpha ...", "alpha", "beta")
+        and ordered_wrong("... alpha ... missing", "alpha", "beta")
+        and not ordered_wrong("... alpha ...\n... beta ...", "alpha", "beta")
+    ):
+        pass
+    else:
+        errors.append("validator: ordering self-control failed")
+
+    # Every path and section the skills tell an agent to read must exist. The
+    # suite reads only SKILL.md, so a deleted reference or a renamed heading is
+    # otherwise invisible.
+    if "## 3b." not in peers:
+        errors.append("coding-peers: §3b heading missing; three skills point at it")
+    for relative in (
+        "peer-bug-review/references/evidence-contract.md",
+        "peer-bug-review/references/detection-and-evaluation.md",
+        "peer-bug-review/references/repo-overview.md",
+        "peer-bug-review/references/runtime-adapters.md",
+        "peer-bug-review/references/review-output.schema.json",
+        "peer-bug-review/assets/bug-spec-template.md",
+        "peer-bug-review/scripts/review_state.py",
+        "peer-bug-review/scripts/render_review_batch.py",
+        "peer-bug-review/scripts/eval_peer_bug_review.py",
+    ):
+        if not (SKILLS_ROOT / relative).is_file():
+            errors.append(f"missing referenced file: {relative}")
 
     valid_metadata = (
         'interface:\n'

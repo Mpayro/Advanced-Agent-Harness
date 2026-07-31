@@ -1,4 +1,4 @@
 interface:
   display_name: "Coding Peers"
-  short_description: "Fast read-only Luna review for bounded changes"
+  short_description: "Fast read-only adversarial review for bounded changes"
   default_prompt: "Use $coding-peers to run a fast independent review of this exact plan, diff, or artifact."

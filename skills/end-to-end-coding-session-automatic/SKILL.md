@@ -107,7 +107,8 @@ in/out scope, acceptance evidence,
 `workflow_owner=end-to-end-coding-session-automatic`,
 `persistence_mode=persistent`, the canonical `living_plan`, and the auto-commit
 `terminal_contract`: accepted plan, accepted final diff, resolved heavy-review
-choice, verified isolated-branch commit. Never set a token budget unless the user
+choice, verified isolated-branch commit, and every authorized release step
+finished when the consent gate named any. Never set a token budget unless the user
 supplied one.
 
 If eligible and `persistence_mode=none`, open no handle and make no handle-state
@@ -152,9 +153,15 @@ The reviewer defaults to reject when evidence is missing. It is authoritative
 only inside already-authorized deterministic scope; it cannot invent business
 intent, widen scope, or authorize production/destructive effects.
 
-Reject the plan outright when the consent gate named a release action and the
-plan does not carry that action's rollback and verification. This is the gate the
-eligibility preflight could not run, because the plan did not exist yet.
+Reject the plan outright in either direction, since this is the first moment the
+plan exists and the eligibility preflight could run neither test:
+
+- The consent gate named a release action and the plan does not carry that
+  action's rollback and verification.
+- The plan contains a production, destructive, or irreversible step the consent
+  gate never named. Return it to the user for naming; an autonomous run may not
+  acquire that authority from its own plan. This is not a technical rejection and
+  does not consume a plan-gate attempt.
 
 On rejection:
 
@@ -236,18 +243,25 @@ Abort on any other staged bytes. Use a conventional outcome-focused message.
 
 ## Step 9 Override — Authorized Release
 
-Push, merge, deploy, or promote only when the consent gate named that exact
-action and the base skill's Release And Production Actions conditions all hold.
+Announce this step as `Skill step 9/9 - Authorized release`, and every earlier
+step as `<N>/9`, whenever the consent gate named a release action. A run with no
+release keeps the base `<N>/8` numbering.
+
+Perform a release step — every verb the consent gate enumerates, migrations
+included — only when that gate named that exact action and the base skill's
+Release And Production Actions conditions all hold.
 Commit authority is not release authority; never infer one from the other.
 
 Run only after the commit exists and the heavy-review state is `declined` or
 `completed`. Execute the plan's release steps in its order, verify each before
 starting the next, and stop at the first failure with the rollback state stated.
-Record each step as executed or not reached; a release step is never reported as
-proposed once its authorization was consumed.
+Record each step as executed, failed with its rollback state, or not reached. A
+release step the consent gate named is never reported as proposed, whatever its
+outcome.
 
-Only in `persistence_mode=persistent`, close the handle as complete after the
-commit exists, mapped verification is green or honestly bounded, the final code
+Only in `persistence_mode=persistent`, close the handle as complete after every
+authorized release step finished, the commit exists, mapped verification is green
+or honestly bounded, the final code
 gate accepted, the heavy-review choice resolved, and the branch/worktree state is
 reported.
 
@@ -277,8 +291,9 @@ Report changed behavior, exact verification, eligibility result, plan/code gate
 counts, heavy-review state, persistence mode and handle state (`not used by user
 choice` for `persistence_mode=none`), commit SHA/message/branch, dirty state,
 remaining risk, and each release step as executed, failed with its rollback
-state, or — for anything the consent gate never named — proposed.
+state, not reached, or — only for something the consent gate never named —
+proposed.
 
-Do not push, merge, deploy, or promote unless the consent gate authorized that
-exact action. Anything the user did not name at that gate returns as a proposed
+Do not perform any release step, migrations included, unless the consent gate
+authorized that exact action. Anything the user did not name at that gate returns as a proposed
 step, never as a completed one.

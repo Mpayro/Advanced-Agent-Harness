@@ -152,8 +152,10 @@ codex exec \
   inherits `~/.codex/config.toml` — today `gpt-5.6-sol` at `xhigh`, the slowest
   and costliest combination available.
 - `--ignore-user-config` also drops the user's plugins, MCP servers, and hooks.
-  Use it for every read-only reviewer; omit it only for an owned
-  `workspace-write` task.
+  Use it for every reviewer this skill dispatches. This skill never runs a peer
+  with `-s workspace-write`: reviewers are read-only, and under Repair authority
+  the outer orchestrator makes the change itself (§6). A workflow that owns a
+  branch may relax the sandbox; this one owns none.
 
 ### Is it working or stuck?
 
@@ -261,8 +263,9 @@ implementation.
 models exist, their priority, and how to call them; follow its embedded
 instructions.
 
-- File present: external consultation is part of the run. Say which peers you
-  will consult.
+- File present: external consultation is part of the run. Before the first send,
+  name the peers and say what artifact leaves the machine, so the user can refuse
+  it. A key on disk is a capability, never a standing consent.
 - File absent: in the opening gate, tell the user once to create it and point
   to `setup/NVIDIA-KEYS.md`. Say plainly that it is optional and they can ignore
   it. Then continue — never block, never ask again this run — and mark the

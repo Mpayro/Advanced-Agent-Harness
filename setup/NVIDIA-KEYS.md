@@ -11,6 +11,10 @@ which exposes an OpenAI-compatible API.
 - **MiniMax-M3** — the one that can **see**. Screenshots, mockups, diagrams,
   video frames. Use it first whenever the task carries an image.
 
+A key is optional. Without one the workflows run and mark the external
+perspective unavailable; with one they consult those peers at the plan and the
+finished implementation, announcing each send first.
+
 You do not need a key for the normal workflows. `coding-peers`,
 `end-to-end-coding-session`, and `peer-bug-review` use permitted Codex reviewers
 by default. Configure NVIDIA only when you want to request a named external

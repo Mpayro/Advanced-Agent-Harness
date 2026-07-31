@@ -117,6 +117,9 @@ Present a compact checklist:
 - External-peer availability, checked here per the `coding-peers` External Peers
   section. If the key is missing, say so now with the setup pointer — never at
   the review gate, after the user has waited for the whole run.
+- Release steps, whenever the objective plausibly reaches production. Name each
+  action here and get it authorized here. Nothing later in the run can grant that
+  authority, so an unasked release is an unauthorized one.
 
 The first alignment response must recommend one mode and ask, naming the handle
 this harness would open (`goal`, or `loop`):
@@ -172,6 +175,9 @@ The artifact must contain:
 - State transitions and business invariants when relevant.
 - Producer/consumer lineage, source freshness, and artifact provenance.
 - Ordered checkbox tasks and verification commands.
+- Release steps when the objective reaches production, each with its own
+  acceptance evidence and rollback. Release condition 1 cannot be satisfied by a
+  plan that has no slot for them.
 - Progress, decisions, surprises/blockers, review rounds, and
   `terminal_peer_review_state`.
 - The user-selected `persistence_mode` and its recommendation rationale.
@@ -195,7 +201,9 @@ plan review to two revisions; a repeated authority blocker returns to the user.
 ## Step 4/8 — Present Plan And Get Implementation Approval
 
 Show at most five plain-language bullets: outcome, protected rule, proof, scope
-boundary, and saved plan path. End by asking for explicit implementation approval.
+boundary, and saved plan path — plus one more naming every release step when the
+plan carries any. End by asking for explicit implementation approval, and ask for
+release authorization separately whenever release steps exist.
 
 Do not edit product code until the user approves.
 
@@ -332,8 +340,10 @@ exact verification, remaining risk, heavy-review outcome, branch/dirty state,
 the saved task-owned patch, explicitly excluded unrelated dirt, and the proposed
 commit/push/merge steps. Ask before commit.
 
-If the approved plan carries release steps, execute them after that approval per
-Release And Production Actions, then report what reached production.
+Commit authority is not release authority; never infer one from the other. If the
+approved plan carries release steps, ask for them separately, naming each action,
+and execute only the ones the user names in that answer. Then report what reached
+production and what did not.
 
 Only in `persistence_mode=persistent`, close the handle as complete when the
 tested/reviewed branch and resolved heavy-review choice have reached this
@@ -378,7 +388,8 @@ and what did not.
 | Plan review | 2 revisions | Same authority blocker repeats |
 | Failing check | 3 attempts | Root cause remains unclear or failure changes |
 | Final diff review | 2 rounds | No new confirmed in-scope defect |
-| External peer, if explicitly requested | 1 retry | Repeated empty/error/timeout |
+| External peer consultation | 1 retry | Repeated empty/error/timeout |
+| Authorized release | 1 pass, no retry | Stop at first failure, state rollback |
 | Heavy Peer Bug Review | 1 offer, 1 embedded run | Declined, completed, or blocked |
 
 Repeat only the failed stage. Resume from the living plan after compaction, and
@@ -397,7 +408,11 @@ Include:
   `persistence_mode=none`.
 - Branch and dirty/clean state.
 - Proposed commit, push/PR/merge, and cleanup plan.
+- Release steps, each as executed, failed with its rollback state, not reached,
+  or — only when the user never authorized it — proposed.
 - Skill-use summary: followed, changed/skipped with reason, stage retry counts,
   what worked, and what failed.
 
-Do not commit, push, or merge unless the user explicitly asks.
+Do not commit, push, merge, deploy, promote, or migrate unless the user
+explicitly asks. A run that reached production says so plainly; it never reports
+a completed release as proposed.
