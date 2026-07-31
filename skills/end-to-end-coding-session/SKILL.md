@@ -104,6 +104,9 @@ Present a compact checklist:
   `persistence_mode=none`; both modes keep the living plan and stop before commit.
 - Adversarial peer, when the `coding-peers` table offers a choice in this
   harness. Settle it here so the later gates never interrupt the run.
+- External-peer availability, checked here per the `coding-peers` External Peers
+  section. If the key is missing, say so now with the setup pointer — never at
+  the review gate, after the user has waited for the whole run.
 
 The first alignment response must recommend one mode and ask, naming the handle
 this harness would open (`goal`, or `loop`):
@@ -170,9 +173,14 @@ distinct risk lane. The reviewer receives the real plan, not a coordinator
 summary, and tries to refute hidden scope, missing tests, business/data risk,
 and simpler alternatives.
 
-Verify each peer claim. Revise only for confirmed issues and record accepted,
-rejected, or deferred feedback in the living plan. Limit plan review to two
-revisions; a repeated authority blocker returns to the user.
+Once the plan is final, also send it to the external peers per the
+`coding-peers` External Peers section, when the opening gate found them
+available. A third-party reader has none of this session's assumptions and is
+the cheapest place to catch a wrong premise — before any code exists.
+
+Verify each peer claim, external ones included. Revise only for confirmed issues
+and record accepted, rejected, or deferred feedback in the living plan. Limit
+plan review to two revisions; a repeated authority blocker returns to the user.
 
 ## Step 4/8 — Present Plan And Get Implementation Approval
 
@@ -278,6 +286,11 @@ Dispatch a fresh adversarial reviewer with no prior conclusions, chosen per the
 real target and any required Computer Use evidence for correctness, missed
 requirements, security/data risk, over-engineering, and missing proof. Apply
 Ponytail review to remove speculative layers.
+
+Send the same frozen target to the external peers per the `coding-peers`
+External Peers section, when the opening gate found them available. This is the
+second and last external consultation: the plan was reviewed before the code
+existed, and this reviews what was actually built against it.
 
 Treat every finding as a hypothesis. Reproduce it in code/runtime, fix only
 confirmed in-scope defects, re-run mapped checks, and re-review once. Adjacent

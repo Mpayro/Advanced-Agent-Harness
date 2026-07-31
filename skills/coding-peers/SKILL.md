@@ -43,7 +43,9 @@ Never infer Repair authority from "review," "audit," "what do you think," or a
 request for a second opinion.
 
 In the same first response, settle the adversarial peer when the §3b table
-offers a choice in this harness. Asking later means stopping the run to ask.
+offers a choice in this harness, and check external-peer availability per the
+External Peers section. Asking later means stopping the run to ask; discovering
+a missing key later means the user waited for nothing.
 
 Inspect repo instructions and `git status`. In a dirty tree, construct the review
 target from only the intended files/base/commit. Never send or review a broad
@@ -244,19 +246,38 @@ Maximum: two technical review rounds total. If scope expands or intent is
 unresolved, return a routing recommendation; do not escalate recursively or
 invent authority.
 
-## Optional Named External Peer
+## External Peers
 
-Use an external GLM/MiniMax/NVIDIA peer only when the user explicitly names it
-or explicitly requests an external perspective.
+A third-party peer sees the work without any of this session's assumptions, so
+it catches what a same-family reviewer rationalizes. Consult one at the two
+moments where being wrong is expensive: the finalized plan, and the finished
+implementation.
 
-- First use `delegating-to-external-models`.
+**Check availability in the opening gate, not at the review gate.** Read
+`~/NVIDIA_API_KEY.env`. Never pin model names here — that file declares which
+models exist, their priority, and how to call them; follow its embedded
+instructions.
+
+- File present: external consultation is part of the run. Say which peers you
+  will consult.
+- File absent: say so once, at the start, and point to `setup/NVIDIA-KEYS.md`
+  for how to set it up. Then continue without them and mark the external
+  perspective unavailable in the verdict. Never discover this at the review
+  gate — by then the user has already waited for the whole run.
+
+Every send:
+
+- First use `delegating-to-external-models`. It is a data boundary, not a
+  formality.
 - Redact secrets, customer data, private logs, and sensitive image/video content.
 - Send only the relevant exact artifact/diff.
 - Disclose what was sent and redacted.
 - Validate a non-empty response.
 - Retry transport once, then fall back to the permitted local reviewer.
 
-External authorization never overrides current user/repo/model/data policy.
+External findings are hypotheses like any other: reproduce them locally before
+accepting one. External authorization never overrides current user/repo/model/
+data policy.
 
 ## Output
 

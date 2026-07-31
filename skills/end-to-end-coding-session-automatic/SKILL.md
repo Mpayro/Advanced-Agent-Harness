@@ -55,6 +55,10 @@ or `loop`):
 - Settle the adversarial peer in this same gate when the `coding-peers` table
   offers a choice in this harness, and record it. An autonomous run that stops
   at its own review gate to ask who reviews is not autonomous.
+- Check external-peer availability here too, per the `coding-peers` External
+  Peers section, and record the result. Both gates below consult those peers
+  when available; a missing key is reported now, with the setup pointer, and
+  the run continues with the external perspective marked unavailable.
 
 - The user selected Automatic.
 - Eligibility will be checked read-only after alignment; only an eligible task in
@@ -125,7 +129,9 @@ slugs, and liveness rules are binding here.
 
 Do not ask the user to approve the plan. Freeze the full plan artifact and give
 it plus the authorized objective to a fresh, no-context adversarial reviewer
-chosen per the `coding-peers` peer table.
+chosen per the `coding-peers` peer table. When the consent gate found external
+peers available, send the same frozen plan to them per the `coding-peers`
+External Peers section and fold their verified findings into this gate.
 
 Required output:
 
@@ -173,7 +179,9 @@ the task is blocked or was not eligible for Automatic.
 
 Freeze the exact `approved_plan_target`, final task-owned patch/review manifest,
 and verification evidence. Dispatch a fresh adversarial reviewer chosen per the
-`coding-peers` peer table.
+`coding-peers` peer table. When external peers are available, send them the same
+frozen target — this is the second and last external consultation, on what was
+actually built.
 
 Required output:
 
