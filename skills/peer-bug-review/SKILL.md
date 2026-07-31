@@ -23,10 +23,11 @@ bugs.”
 - Use `coding-peers` or local subagents for independent review when available.
 - Route every spawned explorer, verifier, reviewer, implementer, and integration
   adversary through the cheap native model for the active harness: Sonnet in
-  Claude/Claude Code, or GPT-5.6 Luna in Codex. Detect the harness from the
-  runtime, not the skill path. In Codex, use the local `codex exec` Luna adapter
-  when the thread subagent tool does not expose Luna. Never upgrade this
-  workflow's subagents to Opus, Terra, or Sol.
+  Claude/Claude Code, or the cheap Codex tier in Codex. Slugs live only in
+  `coding-peers` §3b; never pin a version here. Detect the harness from the
+  runtime, not the skill path. In Codex, use the local `codex exec` adapter when
+  the thread subagent tool does not expose that tier. Never upgrade this
+  workflow's subagents to the review or implementation tiers.
 - Keep exactly one workflow owner for confirmation, planning, fix review, and
   verification. If an outer loop already owns a compatible gate, use that evidence
   instead of spawning a duplicate gate.
@@ -144,7 +145,7 @@ Reserve one concurrency slot for the coordinator. Fill remaining slots with smal
 read-only explorers.
 
 - Use the active harness's required cheap model for every explorer: Sonnet in
-  Claude/Claude Code or GPT-5.6 Luna in Codex.
+  Claude/Claude Code, or the cheap Codex tier from `coding-peers` §3b in Codex.
 - Never violate repo/model instructions to satisfy a preferred model name.
 - Give each explorer a disjoint code or failure-method lane and an output budget.
 - Require covered symbols/journeys, commands/evidence, candidates, and gaps.

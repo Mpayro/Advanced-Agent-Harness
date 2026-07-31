@@ -111,6 +111,9 @@ AUTOMATIC_PHRASES = (
     "Only in `persistence_mode=persistent`, close the handle as complete",
     "three consecutive handle turns",
     "Commit authority is not release authority",
+    # A release the consent gate authorized must have a step that performs it.
+    "Reject the plan outright when the consent gate named a release action",
+    "a release step is never reported as proposed once its authorization was consumed",
     # Ordering-check anchors: asserted here so a rename cannot turn the
     # comparisons below into -1 > -1 and pass vacuously.
     "read the continuation handle before the first alignment",
@@ -294,6 +297,7 @@ def main() -> int:
         "after that gate accepts, set `completed`",
         "sole staging input",
         "Do not advance to the code gate or auto-commit when required UI proof is missing",
+        "a release step is never reported as proposed once its authorization was consumed",
     ):
         mutation_control(
             automatic, phrase, AUTOMATIC_PHRASES, "automatic", errors

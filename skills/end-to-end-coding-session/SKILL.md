@@ -1,6 +1,6 @@
 ---
 name: end-to-end-coding-session
-description: Use when the user explicitly wants a multi-stage coding objective handled end to end with a human-approved plan, a living execution artifact, an explicit persistent-continuation or single-run choice, isolated implementation, verification, adversarial review, one optional heavy Peer Bug Review choice, and a stop-before-commit handoff. Triggers include "end-to-end coding session", "handle this objective end to end", "plan it and implement after I approve", "use a persistent goal", "córrelo en loop", and broad cross-module feature or refactor work. Do not use for a small bounded review, an explicitly automatic auto-commit workflow, or an exhaustive unknown bug hunt.
+description: Use when the user explicitly wants a multi-stage coding objective handled end to end with a human-approved plan, a living execution artifact, an explicit persistent-continuation or single-run choice, isolated implementation, verification, adversarial review, one optional heavy Peer Bug Review choice, and a handoff that stops before commit unless the approved plan carries authorized release steps. Triggers include "end-to-end coding session", "handle this objective end to end", "plan it and implement after I approve", "use a persistent goal", "córrelo en loop", and broad cross-module feature or refactor work. Do not use for a small bounded review, an explicitly automatic auto-commit workflow, or an exhaustive unknown bug hunt.
 ---
 
 # End-to-End Coding Session
@@ -110,7 +110,8 @@ Present a compact checklist:
 - Acceptance evidence.
 - Ambiguities that could change behavior or authority.
 - Persistence disclosure: the user must choose `persistence_mode=persistent` or
-  `persistence_mode=none`; both modes keep the living plan and stop before commit.
+  `persistence_mode=none`; both modes keep the living plan and stop before commit,
+  and neither one grants release authority — only the plan and this gate do.
 - Adversarial peer, when the `coding-peers` table offers a choice in this
   harness. Settle it here so the later gates never interrupt the run.
 - External-peer availability, checked here per the `coding-peers` External Peers
@@ -202,7 +203,8 @@ After approval:
 
 - For `persistence_mode=persistent`, re-read the handle. If no unfinished run
   exists, open it on the Step-1-authorized objective: outcome, in/out scope,
-  acceptance evidence, and the pre-commit terminal condition. Record
+  acceptance evidence, and the terminal condition — pre-commit, or post-release
+  when the plan carries authorized release steps. Record
   `workflow_owner=end-to-end-coding-session`, `persistence_mode=persistent`, the
   canonical `living_plan` path, and that `terminal_contract` — in the goal
   objective where goal tools exist, in the living plan where the handle is a
@@ -335,7 +337,9 @@ Release And Production Actions, then report what reached production.
 
 Only in `persistence_mode=persistent`, close the handle as complete when the
 tested/reviewed branch and resolved heavy-review choice have reached this
-pre-commit terminal condition. Close it as blocked only after the same real
+terminal condition — before commit, or after the plan's authorized release steps
+finished when the plan carried them. A run that reached production never closes
+on a pre-commit terminal state. Close it as blocked only after the same real
 blocker recurs for at least three consecutive handle turns. A blocked terminal
 review state alone does not authorize a blocked close.
 

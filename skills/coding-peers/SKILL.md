@@ -105,7 +105,7 @@ points here.
 
 | Role | In Claude | In Codex |
 |---|---|---|
-| Adversarial or independent review gate | ask each time: Sol or an adversarial Opus subagent | Sol (`gpt-5.6-sol`) |
+| Adversarial or independent review gate | ask once at the start of the run: Sol or an adversarial Opus subagent | Sol (`gpt-5.6-sol`) |
 | Bulk bug-review labor: explorers, verifiers, batches | Sonnet subagents | Luna (`gpt-5.6-luna`) |
 | Heavy coding / implementation | Sonnet subagents, reviewed by Opus | Terra (`gpt-5.6-terra`) |
 | UI product proof | `claude-in-chrome` | `computer-use:computer-use` |

@@ -87,8 +87,9 @@ human-gated end-to-end without opening an Automatic handle if any is true:
 - Business semantics or product intent remain unresolved.
 - A constraint needs operator calibration or preference.
 - Source version/freshness or producer/consumer lineage is unknown.
-- A production, destructive, or irreversible action is in scope, but the consent
-  gate did not name it or the plan carries no rollback and verification for it.
+- A production, destructive, or irreversible action is in scope and the consent
+  gate did not name it. Whether the plan carries its rollback and verification is
+  not knowable here — the plan does not exist yet — so the plan gate enforces it.
 - The checkout cannot be isolated from unrelated dirt.
 - Live database/browser/artifact proof is required but unavailable.
 - Commit scope, target branch, or generated-output promotion is ambiguous.
@@ -150,6 +151,10 @@ COUNTEREVIDENCE: non-empty same-line concern or none
 The reviewer defaults to reject when evidence is missing. It is authoritative
 only inside already-authorized deterministic scope; it cannot invent business
 intent, widen scope, or authorize production/destructive effects.
+
+Reject the plan outright when the consent gate named a release action and the
+plan does not carry that action's rollback and verification. This is the gate the
+eligibility preflight could not run, because the plan did not exist yet.
 
 On rejection:
 
@@ -229,9 +234,17 @@ input (`git apply --cached` or an equivalent patch-to-index operation), then
 verify the cached diff digest equals the accepted code-gate patch before commit.
 Abort on any other staged bytes. Use a conventional outcome-focused message.
 
+## Step 9 Override — Authorized Release
+
 Push, merge, deploy, or promote only when the consent gate named that exact
 action and the base skill's Release And Production Actions conditions all hold.
 Commit authority is not release authority; never infer one from the other.
+
+Run only after the commit exists and the heavy-review state is `declined` or
+`completed`. Execute the plan's release steps in its order, verify each before
+starting the next, and stop at the first failure with the rollback state stated.
+Record each step as executed or not reached; a release step is never reported as
+proposed once its authorization was consumed.
 
 Only in `persistence_mode=persistent`, close the handle as complete after the
 commit exists, mapped verification is green or honestly bounded, the final code
@@ -253,6 +266,7 @@ report workflow state only.
 | Code approval | 3 fresh reviewers | Stop before commit |
 | Post-heavy approval | 2 fresh reviewers | Keep review state blocked |
 | Heavy review | 1 question, 1 embedded run | Declined, completed, or blocked |
+| Authorized release | 1 pass, no retry | Stop at first failure, state rollback |
 
 Do not reset counters after compaction. Resume from the living plan and, only in
 `persistence_mode=persistent`, from the continuation handle.
@@ -262,7 +276,8 @@ Do not reset counters after compaction. Resume from the living plan and, only in
 Report changed behavior, exact verification, eligibility result, plan/code gate
 counts, heavy-review state, persistence mode and handle state (`not used by user
 choice` for `persistence_mode=none`), commit SHA/message/branch, dirty state,
-remaining risk, and the proposed push/PR/merge steps.
+remaining risk, and each release step as executed, failed with its rollback
+state, or — for anything the consent gate never named — proposed.
 
 Do not push, merge, deploy, or promote unless the consent gate authorized that
 exact action. Anything the user did not name at that gate returns as a proposed
