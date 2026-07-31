@@ -1,6 +1,6 @@
 ---
 name: end-to-end-coding-session-automatic
-description: Use only when the user explicitly requests the autonomous variant of end-to-end-coding-session, explicitly chooses persistent-continuation or single-run execution, and authorizes automatic commit on an isolated branch. Fresh adversarial Luna reviewers approve the plan and final diff, the user still chooses once whether to run heavy Peer Bug Review, and the workflow never auto-pushes or merges. Do not infer this mode from a generic request to implement, move fast, or work end to end.
+description: Use only when the user explicitly requests the autonomous variant of end-to-end-coding-session, explicitly chooses persistent-continuation or single-run execution, and authorizes automatic commit on an isolated branch. Fresh adversarial reviewers approve the plan and final diff, the user still chooses once whether to run heavy Peer Bug Review, and the workflow never auto-pushes or merges. Do not infer this mode from a generic request to implement, move fast, or work end to end.
 ---
 
 # End-to-End Coding Session — Automatic
@@ -121,7 +121,8 @@ slugs, and liveness rules are binding here.
 ## Step 4 Override — Adversarial Plan Gate
 
 Do not ask the user to approve the plan. Freeze the full plan artifact and give
-it plus the authorized objective to a fresh, no-context Luna reviewer.
+it plus the authorized objective to a fresh, no-context adversarial reviewer
+chosen per the `coding-peers` peer table.
 
 Required output:
 
@@ -168,7 +169,8 @@ the task is blocked or was not eligible for Automatic.
 ## Step 8 Override — Adversarial Code Gate
 
 Freeze the exact `approved_plan_target`, final task-owned patch/review manifest,
-and verification evidence. Dispatch a fresh Luna reviewer.
+and verification evidence. Dispatch a fresh adversarial reviewer chosen per the
+`coding-peers` peer table.
 
 Required output:
 

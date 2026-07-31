@@ -87,7 +87,7 @@ Gather only the context needed to restate the objective:
 
 - For a localized or skill-only change, use one direct scan.
 - For broad or ambiguous repo work, use up to three complementary, read-only
-  Luna explorers: repo/instructions, code path/callers, and tests/tooling.
+  cheap-tier explorers: repo/instructions, code path/callers, and tests/tooling.
 - For a true repo overview, use all three. Never create fake parallelism for the
   same question.
 - Reuse an installed repo index if present. Do not install one for this scan;
@@ -161,7 +161,8 @@ The artifact must contain:
 - The user-selected `persistence_mode` and its recommendation rationale.
 
 Use `coding-peers` as a read-only subprotocol on the full plan artifact. Use one
-fresh Luna reviewer by default; add a second parallel reviewer only for a
+fresh adversarial reviewer by default, chosen per the `coding-peers` peer
+table; add a second parallel reviewer only for a
 distinct risk lane. The reviewer receives the real plan, not a coordinator
 summary, and tries to refute hidden scope, missing tests, business/data risk,
 and simpler alternatives.
@@ -269,8 +270,8 @@ Freeze the actual review target:
 - Non-git files: canonical paths plus SHA-256 manifest.
 - Generated output: artifact plus provenance and acceptance metrics.
 
-Dispatch a fresh Luna reviewer with no prior conclusions, using the `coding-peers`
-Runner section for the exact call and its liveness rules. Require review of the
+Dispatch a fresh adversarial reviewer with no prior conclusions, chosen per the
+`coding-peers` peer table and invoked per its Runner section. Require review of the
 real target and any required Computer Use evidence for correctness, missed
 requirements, security/data risk, over-engineering, and missing proof. Apply
 Ponytail review to remove speculative layers.

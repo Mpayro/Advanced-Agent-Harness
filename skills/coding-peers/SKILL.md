@@ -1,13 +1,14 @@
 ---
 name: coding-peers
-description: Use for a fast, bounded, independent Codex review of a small or settled but important plan, code diff, shared seam, generated artifact, or focused implementation result. It is read-only by default, uses one fresh Luna reviewer unless two genuinely independent risk lanes justify parallel review, verifies every claim locally, and never creates a goal, branch, or commit. Use end-to-end-coding-session for broad implementation and peer-bug-review for exhaustive unknown bug surfaces.
+description: Use for a fast, bounded, independent Codex review of a small or settled but important plan, code diff, shared seam, generated artifact, or focused implementation result. It is read-only by default, asks which adversarial peer to use and dispatches one fresh reviewer unless two genuinely independent risk lanes justify parallel review, verifies every claim locally, and never creates a goal, branch, or commit. Use end-to-end-coding-session for broad implementation and peer-bug-review for exhaustive unknown bug surfaces.
 ---
 
 # Coding Peers
 
 ## Boundary
 
-This is a lightweight, Codex-only review protocol.
+This is a lightweight review protocol. It runs in either harness; §3b decides
+which peer does the work.
 
 - Read-only is the default. A review request does not authorize edits.
 - No persistent handle (goal or loop), plan artifact, branch, worktree, commit,
@@ -72,9 +73,10 @@ never a prose summary. A summary may explain intent but cannot replace the targe
 
 ## 3. Choose The Minimum Reviewer Set
 
-Use one fresh Luna reviewer by default.
+Use one fresh adversarial reviewer by default, chosen per the peer table in
+3b. Ask before dispatching it.
 
-Use two parallel Luna reviewers only when their lanes are truly independent,
+Use two parallel reviewers only when their lanes are truly independent,
 for example:
 
 - Persistence/conservation vs UI/accessibility.
@@ -89,15 +91,34 @@ Use higher reasoning for auth, money, security, destructive operations, state
 machines, or cross-module data contracts. Use lower reasoning for a small
 localized review.
 
-## 3b. Runner — How To Invoke Codex
+## 3b. Peer Selection
 
-This is the only place model slugs are pinned. Every other skill points here.
+This is the only place peers and model slugs are pinned. Every other skill
+points here.
 
-| Role | Slug |
-|---|---|
-| Heavy coding / implementation | `gpt-5.6-terra` |
-| Adversarial or independent review | `gpt-5.6-sol` |
-| Cheap discovery / bulk verification | `gpt-5.6-luna` |
+| Role | In Claude | In Codex |
+|---|---|---|
+| Adversarial or independent review gate | ask each time: Sol or an adversarial Opus subagent | Sol (`gpt-5.6-sol`) |
+| Bulk bug-review labor: explorers, verifiers, batches | Sonnet subagents | Luna (`gpt-5.6-luna`) |
+| Heavy coding / implementation | Sonnet subagents, reviewed by Opus | Terra (`gpt-5.6-terra`) |
+
+Sonnet and Luna are the same tier. Which one does the work is decided by the
+harness you are running in, never by the task. Terra is the Codex peer only;
+running in Claude, heavy implementation is written by Sonnet and reviewed by
+Opus.
+
+**The slugs name a tier, not a version.** When a model is superseded, use the
+newest model of that same tier and leave these roles untouched. A slug in this
+table is an example of the tier, never a pin — this is the only table to update,
+and no other skill may pin a version.
+
+**Ask before every adversarial dispatch.** Running in Claude, put the choice to
+the user each time — Sol or an adversarial Opus subagent — and never carry the
+answer over from a previous dispatch. If the `codex` command is not installed
+there is nothing to ask: use the Opus subagent. Bulk labor is never asked about;
+it always goes to the harness's cheap tier.
+
+## 3c. Runner — How To Invoke Codex
 
 Canonical read-only review call:
 

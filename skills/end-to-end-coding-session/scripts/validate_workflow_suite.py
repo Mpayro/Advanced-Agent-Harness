@@ -117,8 +117,8 @@ PEER_PHRASES = (
     "**Repair authorized:**",
     "Never infer Repair authority",
     "Do not recursively invoke",
-    "Use one fresh Luna reviewer by default",
-    "Use two parallel Luna reviewers only when their lanes are truly independent",
+    "Use one fresh adversarial reviewer by default",
+    "Use two parallel reviewers only when their lanes are truly independent",
     "Require non-empty content on every label's same physical line",
     "always save and SHA-256 hash the exact patch bytes",
     "review manifest containing that patch path/digest",
@@ -227,17 +227,18 @@ def main() -> int:
         texts[name] = text
         if not text.startswith("---\n"):
             errors.append(f"{name}: invalid frontmatter start")
-        for pattern in (
-            r"\bclaude\b",
-            r"\banthropic\b",
-            r"\bsonnet\b",
-            r"\bopus\b",
-            r"\bhaiku\b",
-            r"\bterra\b",
-            r"\bsol\b",
-        ):
-            if re.search(pattern, text, flags=re.IGNORECASE):
-                errors.append(f"{name}: forbidden model/provider term {pattern}")
+        # Naming a model tier is fine — these skills are shared and have to say
+        # who does the work. Pinning a *version* is not: it rots the moment the
+        # model is superseded. The one peer table in coding-peers carries the
+        # example slugs and the "use the newest of that tier" rule; every other
+        # skill names tiers only.
+        if name != "coding-peers":
+            for pattern in (
+                r"\bgpt-\d",
+                r"\bclaude-(?:opus|sonnet|haiku|fable)-\d",
+            ):
+                if re.search(pattern, text, flags=re.IGNORECASE):
+                    errors.append(f"{name}: pinned model version {pattern}")
         mirror = HOME / ".claude" / "skills" / name / "SKILL.md"
         if not mirror.is_file():
             errors.append(f"{name}: missing required mirror")
@@ -285,8 +286,8 @@ def main() -> int:
             automatic, phrase, AUTOMATIC_PHRASES, "automatic", errors
         )
     for phrase in (
-        "Use one fresh Luna reviewer by default",
-        "Use two parallel Luna reviewers only when their lanes are truly independent",
+        "Use one fresh adversarial reviewer by default",
+        "Use two parallel reviewers only when their lanes are truly independent",
         "Require non-empty content on every label's same physical line",
         "review manifest containing that patch path/digest",
         "canonical review manifest is the one target identity for dispatch and response",

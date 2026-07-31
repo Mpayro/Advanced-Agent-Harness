@@ -10,6 +10,11 @@
   independence, not a more expensive model.
 - Never substitute Opus in Claude or Terra/Sol in Codex.
 
+This rule is scoped to Peer Bug Review's own agents — the bulk labor of a bug
+hunt. It does not contradict the `coding-peers` peer table: the adversarial
+gates of `coding-peers` and `end-to-end-coding-session` are a different scope
+and use the reviewer that table names.
+
 ## Codex local Luna runner
 
 If the thread subagent tool does not expose Luna, use the validated local runner.

@@ -23,6 +23,13 @@ Fable root, plus guardrails that only existed as advice in text.
   model versions — the current slugs live ONLY in the `coding-peers` skill.
   Everywhere else says "Codex Sol/Terra (see coding-peers)". Claude subagents
   use the aliases `sonnet`/`opus`, never full model IDs.
+- Which peer does what depends on the harness you are in, not on the task.
+  Sonnet and Luna are the same tier: bulk bug-review labor goes to Sonnet in
+  Claude and to Luna in Codex. Heavy implementation goes to Terra in Codex; in
+  Claude, Sonnet writes it and Opus reviews it. The adversarial gate goes to Sol; running in
+  Claude, **ask at every dispatch** — Sol or an adversarial Opus subagent — and
+  never carry the previous answer over. No Codex installed, no question: Opus.
+  The table lives in `coding-peers` §3b.
 - `autoCompactWindow: 750000` in settings.json is the "don't crash on a long
   session" setting. It is deliberately expensive; a lower value (~450000) costs
   less and compacts more often. Pick knowingly.
