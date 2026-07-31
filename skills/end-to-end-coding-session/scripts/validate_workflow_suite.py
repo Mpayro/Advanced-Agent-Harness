@@ -75,6 +75,8 @@ BASE_PHRASES = (
     "living execution plan",
     "`terminal_peer_review_state`",
     "`coding-peers`; no handle",
+    "Touching production is scope, not a forbidden category",
+    "A plan that never mentions production does not acquire it later",
     "`end-to-end-coding-session-automatic`",
     "`peer-bug-review`",
 )
@@ -108,7 +110,7 @@ AUTOMATIC_PHRASES = (
     "Do not advance to the code gate or auto-commit when required UI proof is missing",
     "Only in `persistence_mode=persistent`, close the handle as complete",
     "three consecutive handle turns",
-    "Never auto-push or auto-merge",
+    "Commit authority is not release authority",
     # Ordering-check anchors: asserted here so a rename cannot turn the
     # comparisons below into -1 > -1 and pass vacuously.
     "read the continuation handle before the first alignment",
@@ -279,6 +281,7 @@ def main() -> int:
     for phrase in (
         "do not overwrite, complete, or close it",
         "inventory index and worktree dirt separately",
+        "A plan that never mentions production does not acquire it later",
         "validate it with the harness's UI proof tool from `coding-peers` §3b before Step 7",
     ):
         mutation_control(base, phrase, BASE_PHRASES, "base", errors)

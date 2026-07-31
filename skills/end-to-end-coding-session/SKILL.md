@@ -13,7 +13,9 @@ and tool from the harness detected at runtime; never route work to a provider
 outside it and External Peers. Respect stricter user, repo, data, and model
 rules.
 
-The workflow produces a tested, reviewed branch and stops before commit. It asks
+The workflow produces a tested, reviewed branch and stops before commit, unless
+the approved plan carries release steps the user authorized — then it carries
+those out under the same gates. See Release And Production Actions. It asks
 exactly once whether to run the optional heavy `peer-bug-review`.
 
 Use Ponytail full: understand the real flow, then make the smallest root-cause
@@ -323,6 +325,9 @@ exact verification, remaining risk, heavy-review outcome, branch/dirty state,
 the saved task-owned patch, explicitly excluded unrelated dirt, and the proposed
 commit/push/merge steps. Ask before commit.
 
+If the approved plan carries release steps, execute them after that approval per
+Release And Production Actions, then report what reached production.
+
 Only in `persistence_mode=persistent`, close the handle as complete when the
 tested/reviewed branch and resolved heavy-review choice have reached this
 pre-commit terminal condition. Close it as blocked only after the same real
@@ -331,6 +336,31 @@ review state alone does not authorize a blocked close.
 
 In `persistence_mode=none`, close nothing; report the equivalent workflow
 terminal or blocked state without creating handle state.
+
+## Release And Production Actions
+
+Touching production is scope, not a forbidden category. Deploying, promoting,
+merging, pushing, and running a migration are ordinary steps when they are what
+the work is for. Refusing them on principle would make the workflow useless for
+the moment it matters most.
+
+An action that reaches production runs when all four hold:
+
+1. The approved plan names it, with its own acceptance evidence and rollback.
+2. The user authorized that exact action for this run, naming it.
+3. Every gate guarding it accepted: verification, adversarial review, and
+   product proof.
+4. It is reversible, or its irreversibility was disclosed and accepted before
+   authorization.
+
+Nothing else grants it. A plan that never mentions production does not acquire
+it later; a reviewer cannot authorize it; approval of the code is not approval
+of the release. Widening scope mid-run to include a release is the one thing
+this section forbids.
+
+Run release steps in the plan's order, verify each before the next, and stop at
+the first failure with the rollback state stated. Report what reached production
+and what did not.
 
 ## Stage Limits
 

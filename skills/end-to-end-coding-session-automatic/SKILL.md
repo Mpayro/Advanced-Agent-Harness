@@ -1,6 +1,6 @@
 ---
 name: end-to-end-coding-session-automatic
-description: Use only when the user explicitly requests the autonomous variant of end-to-end-coding-session, explicitly chooses persistent-continuation or single-run execution, and authorizes automatic commit on an isolated branch. Fresh adversarial reviewers approve the plan and final diff, the user still chooses once whether to run heavy Peer Bug Review, and the workflow never auto-pushes or merges. Do not infer this mode from a generic request to implement, move fast, or work end to end.
+description: Use only when the user explicitly requests the autonomous variant of end-to-end-coding-session, explicitly chooses persistent-continuation or single-run execution, and authorizes automatic commit on an isolated branch. Fresh adversarial reviewers approve the plan and final diff, the user still chooses once whether to run heavy Peer Bug Review, and release steps such as push, merge, or deploy run only when the consent gate named them and the plan carries their rollback. Do not infer this mode from a generic request to implement, move fast, or work end to end.
 ---
 
 # End-to-End Coding Session — Automatic
@@ -68,7 +68,9 @@ or `loop`):
 - In `persistence_mode=none`, open no handle; the living plan carries workflow
   continuity.
 - Approved code will be committed automatically to an isolated branch.
-- Nothing will be pushed or merged.
+- Release steps — push, merge, deploy, promote, migrate — run automatically only
+  if named here and carried in the plan with rollback. Anything unnamed stops as
+  a proposal.
 - The user will still get one terminal yes/no heavy-review choice.
 
 Proceed only after the user explicitly confirms the understood scope, persistence
@@ -85,7 +87,8 @@ human-gated end-to-end without opening an Automatic handle if any is true:
 - Business semantics or product intent remain unresolved.
 - A constraint needs operator calibration or preference.
 - Source version/freshness or producer/consumer lineage is unknown.
-- The action is destructive, production-facing, or not safely reversible.
+- A production, destructive, or irreversible action is in scope, but the consent
+  gate did not name it or the plan carries no rollback and verification for it.
 - The checkout cannot be isolated from unrelated dirt.
 - Live database/browser/artifact proof is required but unavailable.
 - Commit scope, target branch, or generated-output promotion is ambiguous.
@@ -225,7 +228,10 @@ linked worktree. Use the accepted saved task-owned patch as the sole staging
 input (`git apply --cached` or an equivalent patch-to-index operation), then
 verify the cached diff digest equals the accepted code-gate patch before commit.
 Abort on any other staged bytes. Use a conventional outcome-focused message.
-Never auto-push or auto-merge.
+
+Push, merge, deploy, or promote only when the consent gate named that exact
+action and the base skill's Release And Production Actions conditions all hold.
+Commit authority is not release authority; never infer one from the other.
 
 Only in `persistence_mode=persistent`, close the handle as complete after the
 commit exists, mapped verification is green or honestly bounded, the final code
@@ -258,4 +264,6 @@ counts, heavy-review state, persistence mode and handle state (`not used by user
 choice` for `persistence_mode=none`), commit SHA/message/branch, dirty state,
 remaining risk, and the proposed push/PR/merge steps.
 
-Do not push or merge unless the user explicitly asks.
+Do not push, merge, deploy, or promote unless the consent gate authorized that
+exact action. Anything the user did not name at that gate returns as a proposed
+step, never as a completed one.
