@@ -10,7 +10,8 @@ description: Use for a fast, bounded, independent Codex review of a small or set
 This is a lightweight, Codex-only review protocol.
 
 - Read-only is the default. A review request does not authorize edits.
-- No persistent goal, plan artifact, branch, worktree, commit, push, or merge.
+- No persistent handle (goal or loop), plan artifact, branch, worktree, commit,
+  push, or merge.
 - Do not delegate implementation by default.
 - The outer orchestrator owns routing and mutations.
 - A peer finding is a hypothesis until reproduced against code/runtime.

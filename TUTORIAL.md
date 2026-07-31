@@ -10,9 +10,9 @@ The workflow first scans the real repo, then shows a compact alignment
 checklist: outcome, scope, non-goals, assumptions, constraints, acceptance
 evidence, and any ambiguity that changes behavior or authority.
 
-Confirm the interpretation and choose persistent goal or no goal. The workflow
-recommends a goal for long, complex, interruption-prone work and no goal for a
-simple bounded run, but it waits for your choice. No product files are edited
+Confirm the interpretation and choose persistent continuation or a single run.
+The workflow recommends persistence for long, complex, interruption-prone work
+and a single run for a simple bounded one, but it waits for your choice. No product files are edited
 yet.
 
 Next it writes and adversarially reviews a living plan. You get at most five
@@ -42,9 +42,9 @@ verified result and stops before commit.
 end-to-end coding session automatic: migrate the email renderer
 ```
 
-Automatic requires an explicit persistent-goal or no-goal choice plus
-isolated-branch auto-commit consent. It recommends a goal for long/complex work
-and no goal for simple/bounded work. It refuses tasks whose intent, source
+Automatic requires an explicit persistent-continuation or single-run choice plus
+isolated-branch auto-commit consent. It recommends persistence for long/complex
+work and a single run for simple/bounded work. It refuses tasks whose intent, source
 freshness, proof, isolation, or production boundary is unresolved.
 
 For an eligible task:

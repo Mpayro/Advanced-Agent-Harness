@@ -1,6 +1,6 @@
 ---
 name: end-to-end-coding-session
-description: Use when the user explicitly wants a multi-stage coding objective handled end to end with a human-approved plan, a living execution artifact, an explicit persistent-goal or no-goal choice, isolated implementation, verification, adversarial review, one optional heavy Peer Bug Review choice, and a stop-before-commit handoff. Triggers include "end-to-end coding session", "handle this objective end to end", "plan it and implement after I approve", "use a persistent goal", and broad cross-module feature or refactor work. Do not use for a small bounded review, an explicitly automatic auto-commit workflow, or an exhaustive unknown bug hunt.
+description: Use when the user explicitly wants a multi-stage coding objective handled end to end with a human-approved plan, a living execution artifact, an explicit persistent-continuation or single-run choice, isolated implementation, verification, adversarial review, one optional heavy Peer Bug Review choice, and a stop-before-commit handoff. Triggers include "end-to-end coding session", "handle this objective end to end", "plan it and implement after I approve", "use a persistent goal", "córrelo en loop", and broad cross-module feature or refactor work. Do not use for a small bounded review, an explicitly automatic auto-commit workflow, or an exhaustive unknown bug hunt.
 ---
 
 # End-to-End Coding Session
@@ -18,9 +18,30 @@ Use Ponytail full: understand the real flow, then make the smallest root-cause
 change. Use Superpowers skills only when the user explicitly requests them or the
 repo requires them.
 
-The outer session owns routing, the selected goal mode, goal state when used, and
-the terminal review state.
+The outer session owns routing, the selected persistence mode, the continuation
+handle when used, and the terminal review state.
 Sub-skills return bounded results; they do not start another outer workflow.
+
+## Persistence Handle
+
+Long work needs one handle so the run survives compaction and interruption. That
+handle has a different name in each harness, so this skill calls the choice
+`persistence_mode` and resolves the mechanism from the tools actually available:
+
+| Available tools | Handle | Open | Read | Close |
+|---|---|---|---|---|
+| `create_goal`/`get_goal`/`update_goal` | goal | `create_goal` | `get_goal` | `update_goal(complete\|blocked)` |
+| `ScheduleWakeup` | loop | `/loop`, re-armed each turn | canonical living plan plus the armed wakeup | `ScheduleWakeup(stop: true)` |
+
+- `persistence_mode=persistent` opens the handle this harness has. Never invent
+  goal state where no goal tool exists, and never arm a loop the user did not
+  invoke or authorize in the alignment gate. If neither handle is available, say
+  so and run `persistence_mode=none`.
+- `persistence_mode=none` opens no handle; the living plan alone carries continuity.
+- With a loop handle the canonical living plan *is* the objective record, so it
+  must carry what a goal would hold: `workflow_owner`, `living_plan`,
+  `terminal_contract`, and `persistence_mode`.
+- Name the concrete handle out loud when asking or reporting: goal, or loop.
 
 ## Step 0/8 — Route And Check Existing State
 
@@ -32,7 +53,7 @@ Choose one lane before doing substantial work:
 
 | Request | Lane |
 |---|---|
-| Small, settled plan/diff/artifact needing a second opinion | `coding-peers`; no goal |
+| Small, settled plan/diff/artifact needing a second opinion | `coding-peers`; no handle |
 | Multi-stage or cross-module implementation | This workflow |
 | Explicit autonomous branch auto-commit | `end-to-end-coding-session-automatic` |
 | Unknown/exhaustive repo or UI bug hunt | `peer-bug-review` |
@@ -41,21 +62,22 @@ An explicit request to use this full workflow overrides the small-task shortcut.
 Return a routing recommendation rather than recursively invoking another outer
 workflow.
 
-Call `get_goal` before presenting a new goal-mode choice:
+Read the continuation handle before presenting a new persistence-mode choice:
+`get_goal` where goal tools exist, otherwise the canonical living plan plus any
+armed loop.
 
-- No unfinished goal: continue.
-- Matching unfinished goal: resume only when the objective also records the same
+- No unfinished run: continue.
+- Matching unfinished run: resume only when it also records the same
   `workflow_owner`, `living_plan`, `terminal_contract`, and
-  `goal_mode=persistent`; do not repeat completed investigation, re-ask the
-  goal-mode question, or create another goal.
+  `persistence_mode=persistent`; do not repeat completed investigation, re-ask
+  the persistence question, or open a second handle.
 - Same outcome but different workflow owner, plan identity, or terminal contract:
-  treat it as a different unfinished goal.
-- Different unfinished goal: do not overwrite, complete, or block it. Stop for
-  the user's explicit decision about that goal.
+  treat it as a different unfinished run.
+- Different unfinished run: do not overwrite, complete, or close it. Stop for the
+  user's explicit decision about that run.
 
-If a matching living plan already records a user-selected `goal_mode=none`,
-resume from it without re-asking or touching goal state. Never change modes
-silently.
+If a matching living plan already records a user-selected `persistence_mode=none`,
+resume from it without re-asking or opening a handle. Never change modes silently.
 
 Inspect repo instructions, current branch/worktree, and dirty state read-only.
 
@@ -78,12 +100,13 @@ Present a compact checklist:
 - Assumptions and constraints.
 - Acceptance evidence.
 - Ambiguities that could change behavior or authority.
-- Goal-mode disclosure: the user must choose `goal_mode=persistent` or
-  `goal_mode=none`; both modes keep the living plan and stop before commit.
+- Persistence disclosure: the user must choose `persistence_mode=persistent` or
+  `persistence_mode=none`; both modes keep the living plan and stop before commit.
 
-The first alignment response must recommend one mode and ask:
+The first alignment response must recommend one mode and ask, naming the handle
+this harness would open (`goal`, or `loop`):
 
-`¿Quieres ejecutarlo con goal persistente o sin goal? Recomiendo <modo> porque <razón breve>.`
+`¿Quieres ejecutarlo con continuidad persistente (<handle>) o sin ella? Recomiendo <modo> porque <razón breve>.`
 
 - Recommend `persistent` when the work is long, complex, multi-stage,
   cross-module, interruption-prone, or likely to span compaction.
@@ -92,11 +115,10 @@ The first alignment response must recommend one mode and ask:
 - Do not infer the choice from the recommendation. Wait for the user's explicit
   selection.
 
-Ask the user to confirm the interpretation and goal mode in the same alignment
-gate. For `persistent`, explicitly record the authorization for that persistent
-goal. For `none`, record the opt-out and skip every `create_goal` and
-`update_goal` call. Do not add a separate goal ceremony. Do not edit product
-files yet.
+Ask the user to confirm the interpretation and persistence mode in the same
+alignment gate. For `persistent`, explicitly record the authorization to open
+that handle. For `none`, record the opt-out and skip every open/close call. Do
+not add a separate ceremony for it. Do not edit product files yet.
 
 ## Step 2/8 — Orient And Preflight
 
@@ -136,7 +158,7 @@ The artifact must contain:
 - Ordered checkbox tasks and verification commands.
 - Progress, decisions, surprises/blockers, review rounds, and
   `terminal_peer_review_state`.
-- The user-selected `goal_mode` and its recommendation rationale.
+- The user-selected `persistence_mode` and its recommendation rationale.
 
 Use `coding-peers` as a read-only subprotocol on the full plan artifact. Use one
 fresh Luna reviewer by default; add a second parallel reviewer only for a
@@ -157,14 +179,15 @@ Do not edit product code until the user approves.
 
 After approval:
 
-- For `goal_mode=persistent`, re-run `get_goal`. If no unfinished goal exists,
-  call `create_goal` using the Step-1-authorized objective: outcome, in/out scope,
-  acceptance evidence, and the pre-commit terminal condition. Include
-  `workflow_owner=end-to-end-coding-session`, `goal_mode=persistent`, the
-  canonical `living_plan` path, and that `terminal_contract`. Resume an exact
-  match; stop for the user if a different goal exists.
-- For `goal_mode=none`, do not call `create_goal`, `update_goal`, or any
-  goal-state mutation. Continue from the living plan and isolated worktree.
+- For `persistence_mode=persistent`, re-read the handle. If no unfinished run
+  exists, open it on the Step-1-authorized objective: outcome, in/out scope,
+  acceptance evidence, and the pre-commit terminal condition. Record
+  `workflow_owner=end-to-end-coding-session`, `persistence_mode=persistent`, the
+  canonical `living_plan` path, and that `terminal_contract` — in the goal
+  objective where goal tools exist, in the living plan where the handle is a
+  loop. Resume an exact match; stop for the user if a different run exists.
+- For `persistence_mode=none`, open no handle and mutate no handle state.
+  Continue from the living plan and isolated worktree.
 
 Never set `token_budget` unless the user supplied one.
 
@@ -279,16 +302,16 @@ exact verification, remaining risk, heavy-review outcome, branch/dirty state,
 the saved task-owned patch, explicitly excluded unrelated dirt, and the proposed
 commit/push/merge steps. Ask before commit.
 
-Only in `goal_mode=persistent`, call `update_goal(complete)` when the
+Only in `persistence_mode=persistent`, close the handle as complete when the
 tested/reviewed branch and resolved heavy-review choice have reached this
-pre-commit terminal condition. Call `update_goal(blocked)` only after the same
-real blocker recurs for at least three consecutive goal turns. A blocked
-terminal review state alone does not authorize a blocked goal transition.
+pre-commit terminal condition. Close it as blocked only after the same real
+blocker recurs for at least three consecutive handle turns. A blocked terminal
+review state alone does not authorize a blocked close.
 
-In `goal_mode=none`, never call `update_goal`; report the equivalent workflow
-terminal or blocked state without creating goal state.
+In `persistence_mode=none`, close nothing; report the equivalent workflow
+terminal or blocked state without creating handle state.
 
-## Loop Limits
+## Stage Limits
 
 | Stage | Limit | Stop condition |
 |---|---:|---|
@@ -298,9 +321,9 @@ terminal or blocked state without creating goal state.
 | External peer, if explicitly requested | 1 retry | Repeated empty/error/timeout |
 | Heavy Peer Bug Review | 1 offer, 1 embedded run | Declined, completed, or blocked |
 
-Repeat only the failed stage. Resume from the living plan after compaction and
-from the goal only in `goal_mode=persistent`; never restart the whole workflow
-unless the user's objective changes.
+Repeat only the failed stage. Resume from the living plan after compaction, and
+from the continuation handle only in `persistence_mode=persistent`; never restart
+the whole workflow unless the user's objective changes.
 
 ## Final Response
 
@@ -310,11 +333,11 @@ Include:
 - Verified: exact commands and smoke paths.
 - Remaining risk or unavailable proof.
 - Heavy Peer Bug Review state/verdict.
-- Goal mode and goal state; report `not used by user choice` for
-  `goal_mode=none`.
+- Persistence mode and handle state; report `not used by user choice` for
+  `persistence_mode=none`.
 - Branch and dirty/clean state.
 - Proposed commit, push/PR/merge, and cleanup plan.
-- Skill-use summary: followed, changed/skipped with reason, loop counts, what
-  worked, and what failed.
+- Skill-use summary: followed, changed/skipped with reason, stage retry counts,
+  what worked, and what failed.
 
 Do not commit, push, or merge unless the user explicitly asks.

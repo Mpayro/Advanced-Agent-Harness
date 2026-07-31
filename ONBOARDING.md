@@ -126,8 +126,8 @@ Report:
 - backup paths;
 - validation commands and outputs;
 - Codex/Claude mirror status;
-- unavailable goal, subagent, browser, or Git capabilities;
+- unavailable continuation (goal/loop), subagent, browser, or Git capabilities;
 - optional hooks/external peers left untouched.
 
-Offer one small, low-risk first run. Do not start a persistent goal or mutate a
-real repo merely as an installation smoke test.
+Offer one small, low-risk first run. Do not open a persistent continuation handle
+or mutate a real repo merely as an installation smoke test.

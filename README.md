@@ -29,11 +29,13 @@ end-to-end coding session: add rate limiting to the public API
 
 The human-gated workflow:
 
-1. Routes the request and checks for existing Codex goal state.
+1. Routes the request and checks for an existing continuation handle.
 2. Reads the real repo path, callers, tests, instructions, branch, and dirty
    state before planning.
-3. Restates the objective, recommends persistent goal for long/complex work or
-   no goal for simple/bounded work, and asks you to choose.
+3. Restates the objective, recommends persistent continuation for long/complex
+   work or a single run for simple/bounded work, and asks you to choose. The
+   handle is a goal where the harness has goal tools and a loop (`/loop`) where
+   it does not.
 4. Writes a living plan, has a fresh Codex reviewer attack it, and asks you to
    approve implementation.
 5. Implements the approved plan in an isolated worktree with failure-first
@@ -56,7 +58,7 @@ end-to-end coding session automatic: migrate the auth middleware
 ```
 
 Automatic is explicit opt-in. Its first alignment response also recommends and
-asks you to choose persistent goal or no goal. It then checks that the task is
+asks you to choose persistent continuation or a single run. It then checks that the task is
 deterministic, reversible, isolated, and fully provable. Fresh reviewers get up
 to ten plan gates and three code gates. You still choose once whether to run
 Peer Bug Review. After acceptance it commits only the approved patch to the
@@ -131,8 +133,8 @@ required for the Codex workflows.
 
 ## Requirements
 
-- Codex with subagents; goal support is required only when persistent-goal mode
-  is selected.
+- Codex with subagents. Persistent continuation needs a handle the harness
+  actually has — goal tools, or `/loop` — and only when that mode is selected.
 - Git for branch/worktree implementation flows.
 - Isolated Chrome with a temporary profile and remote debugging for UI smoke
   tests.
