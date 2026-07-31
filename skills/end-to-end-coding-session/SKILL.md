@@ -102,6 +102,8 @@ Present a compact checklist:
 - Ambiguities that could change behavior or authority.
 - Persistence disclosure: the user must choose `persistence_mode=persistent` or
   `persistence_mode=none`; both modes keep the living plan and stop before commit.
+- Adversarial peer, when the `coding-peers` table offers a choice in this
+  harness. Settle it here so the later gates never interrupt the run.
 
 The first alignment response must recommend one mode and ask, naming the handle
 this harness would open (`goal`, or `loop`):
@@ -115,9 +117,10 @@ this harness would open (`goal`, or `loop`):
 - Do not infer the choice from the recommendation. Wait for the user's explicit
   selection.
 
-Ask the user to confirm the interpretation and persistence mode in the same
-alignment gate. For `persistent`, explicitly record the authorization to open
-that handle. For `none`, record the opt-out and skip every open/close call. Do
+Ask the user to confirm the interpretation, the persistence mode, and the
+adversarial peer in the same alignment gate. Record the peer in the living plan
+and reuse it for every gate in this run; never stop mid-run to re-ask. For
+`persistent`, explicitly record the authorization to open that handle. For `none`, record the opt-out and skip every open/close call. Do
 not add a separate ceremony for it. Do not edit product files yet.
 
 ## Step 2/8 — Orient And Preflight

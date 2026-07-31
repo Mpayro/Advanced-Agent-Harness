@@ -42,6 +42,9 @@ Classify the current request:
 Never infer Repair authority from "review," "audit," "what do you think," or a
 request for a second opinion.
 
+In the same first response, settle the adversarial peer when the §3b table
+offers a choice in this harness. Asking later means stopping the run to ask.
+
 Inspect repo instructions and `git status`. In a dirty tree, construct the review
 target from only the intended files/base/commit. Never send or review a broad
 mixed diff as if it belonged to this task.
@@ -73,8 +76,8 @@ never a prose summary. A summary may explain intent but cannot replace the targe
 
 ## 3. Choose The Minimum Reviewer Set
 
-Use one fresh adversarial reviewer by default, chosen per the peer table in
-3b. Ask before dispatching it.
+Use one fresh adversarial reviewer by default, chosen per the peer table in 3b
+and already settled in step 1.
 
 Use two parallel reviewers only when their lanes are truly independent,
 for example:
@@ -112,9 +115,11 @@ newest model of that same tier and leave these roles untouched. A slug in this
 table is an example of the tier, never a pin — this is the only table to update,
 and no other skill may pin a version.
 
-**Ask before every adversarial dispatch.** Running in Claude, put the choice to
-the user each time — Sol or an adversarial Opus subagent — and never carry the
-answer over from a previous dispatch. If the `codex` command is not installed
+**Ask once, up front.** Running in Claude, settle the adversarial peer at the
+start of the run, in the same breath as the other opening questions — Sol or an
+adversarial Opus subagent — and reuse that answer for every gate in the run. A
+review must never halt mid-flight to ask who should review it. The answer holds
+for one run only; a new run asks again. If the `codex` command is not installed
 there is nothing to ask: use the Opus subagent. Bulk labor is never asked about;
 it always goes to the harness's cheap tier.
 

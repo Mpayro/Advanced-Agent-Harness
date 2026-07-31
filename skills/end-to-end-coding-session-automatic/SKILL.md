@@ -52,6 +52,9 @@ or `loop`):
   finish in one continuous run.
 - Do not infer the choice from the recommendation. Wait for the user's explicit
   selection and record `persistence_mode=persistent` or `persistence_mode=none`.
+- Settle the adversarial peer in this same gate when the `coding-peers` table
+  offers a choice in this harness, and record it. An autonomous run that stops
+  at its own review gate to ask who reviews is not autonomous.
 
 - The user selected Automatic.
 - Eligibility will be checked read-only after alignment; only an eligible task in
