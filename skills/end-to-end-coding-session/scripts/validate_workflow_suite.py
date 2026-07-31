@@ -54,27 +54,27 @@ def remove_contract_phrase(text: str, phrase: str) -> str:
 
 BASE_PHRASES = (
     "Human-gated is the default",
-    "Call `get_goal` before",
+    "Read the continuation handle before",
     "`workflow_owner`, `living_plan`, `terminal_contract`, and",
-    "do not overwrite, complete, or block it",
-    "authorization for that persistent goal",
-    "call `create_goal`",
-    "`goal_mode=persistent` or",
-    "`goal_mode=none`",
+    "do not overwrite, complete, or close it",
+    "explicitly record the authorization to open",
+    "`persistence_mode=persistent` opens the handle this harness has",
+    "`persistence_mode=persistent` or",
+    "`persistence_mode=none`",
     "Recommend `persistent`",
     "Recommend `none`",
     "Do not infer the choice",
-    "skip every `create_goal` and `update_goal` call",
+    "skip every open/close call",
     "inventory index and worktree dirt separately",
     "exact task-owned patch bytes",
     "validate it with the harness's UI proof tool from `coding-peers` §3b before Step 7",
     "temporary profile and remote debugging",
     "do not mark the UI verified",
-    "Only in `goal_mode=persistent`, call `update_goal(complete)`",
-    "three consecutive goal turns",
+    "Only in `persistence_mode=persistent`, close the handle as complete",
+    "three consecutive handle turns",
     "living execution plan",
     "`terminal_peer_review_state`",
-    "`coding-peers`; no goal",
+    "`coding-peers`; no handle",
     "`end-to-end-coding-session-automatic`",
     "`peer-bug-review`",
 )
@@ -82,18 +82,18 @@ BASE_PHRASES = (
 AUTOMATIC_PHRASES = (
     "explicit-opt-in workflow",
     "does not invoke a nested base workflow",
-    "replace its goal timing and stop-before-commit disclosure",
+    "replace its handle timing and stop-before-commit disclosure",
     "explicitly confirms",
-    "goal mode",
-    "eligibility-before-goal creation",
-    "without creating an Automatic goal",
+    "persistence mode",
+    "eligibility-before-handle",
+    "without opening an Automatic handle",
     "`workflow_owner=end-to-end-coding-session-automatic`",
     "auto-commit authority",
     "generic \"implement it\" is insufficient",
     "Recommend `persistent`",
     "Recommend `none`",
     "Do not infer the choice",
-    "In `goal_mode=none`, never call `create_goal` or `update_goal`",
+    "open no handle and make no handle-state transitions",
     "Limit: ten plan-gate attempts",
     "| Plan approval | 10 fresh reviewers |",
     "immutable `approved_plan_target`",
@@ -106,14 +106,20 @@ AUTOMATIC_PHRASES = (
     "require the base Step 6 Computer Use smoke",
     "temporary profile and remote debugging",
     "Do not advance to the code gate or auto-commit when required UI proof is missing",
-    "Only in `goal_mode=persistent`, call `update_goal(complete)`",
-    "three consecutive goal turns",
+    "Only in `persistence_mode=persistent`, close the handle as complete",
+    "three consecutive handle turns",
     "Never auto-push or auto-merge",
+    # Ordering-check anchors: asserted here so a rename cannot turn the
+    # comparisons below into -1 > -1 and pass vacuously.
+    "read the continuation handle before the first alignment",
+    "open the handle. Record outcome",
+    "After consent and before opening the handle",
+    "If eligible and `persistence_mode=persistent`, open the handle",
 )
 
 PEER_PHRASES = (
     "Read-only is the default",
-    "No persistent goal",
+    "No persistent handle",
     "**Repair authorized:**",
     "Never infer Repair authority",
     "Do not recursively invoke",
@@ -250,16 +256,20 @@ def main() -> int:
     peers = texts.get("coding-peers", "")
 
     errors.extend(contract_errors(base, BASE_PHRASES, "base"))
-    if base.find("get_goal") > base.find("create_goal"):
-        errors.append("base: create_goal appears before get_goal")
+    if base.find("Read the continuation handle before") > base.find(
+        "explicitly record the authorization to open"
+    ):
+        errors.append("base: the handle is opened before it is read")
 
     errors.extend(contract_errors(automatic, AUTOMATIC_PHRASES, "automatic"))
-    if automatic.find("get_goal") > automatic.find("create the goal"):
-        errors.append("automatic: goal creation appears before get_goal")
-    if automatic.find("After consent and before goal creation") > automatic.find(
-        "If eligible and `goal_mode=persistent`, create the goal"
+    if automatic.find(
+        "read the continuation handle before the first alignment"
+    ) > automatic.find("open the handle. Record outcome"):
+        errors.append("automatic: the handle is opened before it is read")
+    if automatic.find("After consent and before opening the handle") > automatic.find(
+        "If eligible and `persistence_mode=persistent`, open the handle"
     ):
-        errors.append("automatic: eligibility must precede goal creation")
+        errors.append("automatic: eligibility must precede opening the handle")
     if inherits_base_step_one(automatic):
         errors.append("automatic: inherits contradictory base Step-1 disclosure")
 
@@ -267,14 +277,14 @@ def main() -> int:
     errors.extend(peer_response_errors(peers))
 
     for phrase in (
-        "do not overwrite, complete, or block it",
+        "do not overwrite, complete, or close it",
         "inventory index and worktree dirt separately",
         "validate it with the harness's UI proof tool from `coding-peers` §3b before Step 7",
     ):
         mutation_control(base, phrase, BASE_PHRASES, "base", errors)
     for phrase in (
-        "eligibility-before-goal creation",
-        "In `goal_mode=none`, never call `create_goal` or `update_goal`",
+        "eligibility-before-handle",
+        "open no handle and make no handle-state transitions",
         "Limit: ten plan-gate attempts",
         "immutable `approved_plan_target`",
         "atomically set it to `pending`",
