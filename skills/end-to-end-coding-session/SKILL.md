@@ -16,6 +16,29 @@ Everything below serves those four. `coding-peers` decides who every peer is,
 how to reach it, and what a verdict must look like; this skill never names a
 model.
 
+## Superpowers along the way
+
+These are process skills, and they belong inside the beats rather than after
+them. Invoke each where it applies, say so out loud, and follow it:
+
+| Where | Skill |
+|---|---|
+| Before the plan exists, while the shape is still open | `superpowers:brainstorming` |
+| Writing the plan itself | `superpowers:writing-plans` |
+| Isolating the workspace | `superpowers:using-git-worktrees` |
+| Implementing, test first | `superpowers:test-driven-development` |
+| Working through the plan's tasks | `superpowers:executing-plans` |
+| Splitting independent slices across peers | `superpowers:subagent-driven-development` |
+| Anything unexpected, before proposing a fix | `superpowers:systematic-debugging` |
+| Before claiming any of it works | `superpowers:verification-before-completion` |
+| Asking for and reading the adversarial review | `superpowers:requesting-code-review`, `superpowers:receiving-code-review` |
+| Deciding how the branch lands | `superpowers:finishing-a-development-branch` |
+
+Apply `ponytail` throughout: the smallest change that actually works, at the root
+cause, after you understand the whole flow. Never be lazy about understanding the
+problem, input validation, error handling, security, accessibility, or anything
+the user explicitly asked for.
+
 ## Before the first beat
 
 Restate the objective in plain language and put it in front of the user: the
@@ -167,6 +190,28 @@ reached production says so plainly and never calls a finished release proposed.
 
 Do not commit, push, merge, deploy, promote, or migrate unless the user
 explicitly asks.
+
+## What is not done
+
+The user reads a finished report as a finished feature. Correcting that is your
+job, not theirs, and it is the part of the handoff that gets skipped.
+
+Say plainly, in their words and without softening:
+
+- **Asked for and not built.** Anything they raised that this change does not do,
+  and whether it was deferred, ruled out of scope, or blocked. Name it even if
+  they seemed to drop it — people remember what they asked for.
+- **Looks done and is not.** Stubs, TODOs, hardcoded values, a happy path with no
+  error handling, a case that silently does nothing. Anything that would pass a
+  demo and fail on a Tuesday.
+- **Built but not proven.** What you could not verify, what environment or data
+  would have been needed, and what that leaves unknown.
+- **What this could break.** The surfaces that share a seam with the change and
+  were not exercised.
+
+Lead with the largest gap. If a category is genuinely empty, say so — "no
+unhandled cases" is information; silence is not. Never end a handoff whose only
+shape is what went well.
 
 ## Limits
 

@@ -96,6 +96,18 @@ BASE_PHRASES = (
     "A product with a UI is not verified until someone drove it",
     "Never the user's own profile",
     "That is a stated outcome, not a silent skip",
+    # The handoff must correct a false impression of completeness.
+    "The user reads a finished report as a finished feature",
+    "Asked for and not built",
+    "Looks done and is not",
+    "Never end a handoff whose only shape is what went well",
+    # Process skills belong inside the beats.
+    "Superpowers along the way",
+    "superpowers:brainstorming",
+    "superpowers:test-driven-development",
+    "superpowers:systematic-debugging",
+    "superpowers:verification-before-completion",
+    "Apply `ponytail` throughout",
     "Ask before commit",
     "never calls a finished release proposed",
     "Do not commit, push, merge, deploy, promote, or migrate unless the user",
@@ -131,6 +143,10 @@ AUTOMATIC_PHRASES = (
     "never as a completed step",
     "The base skill's last check is not optional here",
     "an autonomous run may not commit a UI change that nobody drove",
+    "The base skill's Superpowers table applies here unchanged",
+    "Nobody is watching this run, which is the reason to follow them",
+    "The user reads a finished report as a finished feature",
+    "Never end a handoff whose only shape is what went well",
 )
 
 PEER_PHRASES = (
@@ -189,6 +205,10 @@ PEER_BUG_PHRASES = (
     "The post-fix review is never skipped",
     # Closing honestly.
     "Per-bug green is not product green",
+    "The user reads a finished report as a finished audit",
+    "Surfaces nobody looked at",
+    "is a lie told by omission",
+    "Never end a handoff whose only shape is what went well",
     "it stops the run from claiming coverage",
     "Repeat only the stage that failed",
 )
@@ -364,6 +384,7 @@ def main() -> int:
         "A plan that never mentioned production does not acquire it later",
         "Three authorities, granted separately, never inferred from each other",
         "A product with a UI is not verified until someone drove it",
+        "Never end a handoff whose only shape is what went well",
     ):
         mutation_control(base, phrase, BASE_PHRASES, "base", errors)
     for phrase in (

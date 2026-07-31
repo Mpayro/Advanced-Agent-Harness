@@ -14,6 +14,11 @@ diff instead of the user, and the accepted diff is committed automatically to an
 isolated branch. Everything else — the peer table, the release conditions, the
 verification discipline, the limits — is inherited unchanged.
 
+The base skill's Superpowers table applies here unchanged — brainstorming before
+the shape is settled, tests before implementation, systematic debugging before
+any fix, verification before any claim — and so does `ponytail`. Nobody is
+watching this run, which is the reason to follow them, not to skip them.
+
 Human-gated remains the default for long work. This variant is allowed only when
 both the authority and the task are explicit.
 
@@ -135,6 +140,28 @@ from the other.
 Run only after the commit exists and the heavy-review question is resolved.
 Execute the plan's steps in its order, verify each before the next, and stop at
 the first failure with the rollback state stated. One pass, no retry.
+
+## What is not done
+
+The user reads a finished report as a finished feature. Correcting that is your
+job, not theirs, and it is the part of the handoff that gets skipped.
+
+Say plainly, in their words and without softening:
+
+- **Asked for and not built.** Anything they raised that this change does not do,
+  and whether it was deferred, ruled out of scope, or blocked. Name it even if
+  they seemed to drop it — people remember what they asked for.
+- **Looks done and is not.** Stubs, TODOs, hardcoded values, a happy path with no
+  error handling, a case that silently does nothing. Anything that would pass a
+  demo and fail on a Tuesday.
+- **Built but not proven.** What you could not verify, what environment or data
+  would have been needed, and what that leaves unknown.
+- **What this could break.** The surfaces that share a seam with the change and
+  were not exercised.
+
+Lead with the largest gap. If a category is genuinely empty, say so — "no
+unhandled cases" is information; silence is not. Never end a handoff whose only
+shape is what went well.
 
 ## Closing
 

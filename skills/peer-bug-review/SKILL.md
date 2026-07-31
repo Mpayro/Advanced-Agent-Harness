@@ -133,6 +133,26 @@ move it. A documented-blocked bug can close an audit; it cannot close a repair.
 Repeat only the stage that failed. Never restart the whole workflow because one
 stage did.
 
+## What is not done
+
+The user reads a finished report as a finished audit. Correcting that is your
+job, not theirs, and it is the part of the handoff that gets skipped.
+
+Say plainly, without softening:
+
+- **Surfaces nobody looked at.** Every inventory item blocked or skipped, what it
+  would have taken to observe it, and what that does to the coverage claim.
+- **Found and not fixed.** Confirmed bugs left open, candidates still waiting on
+  a user decision, and anything documented-blocked. An audit that reads clean
+  because the hard bugs were deferred is a lie told by omission.
+- **Fixed but not proven.** What you could not verify and what that leaves
+  unknown.
+- **What this could break.** Surfaces sharing a seam with the fixes that were not
+  exercised.
+
+Lead with the largest gap. If a category is genuinely empty, say so — silence is
+not information. Never end a handoff whose only shape is what went well.
+
 ## Handoff
 
 Coverage by lane with its honest exclusions. Confirmed bugs, rejected candidates,
