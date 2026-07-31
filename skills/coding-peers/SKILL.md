@@ -75,10 +75,15 @@ When correctness depends on a parser, scheduler, library, or data source, run a
 narrow probe and a negative control. Documentation is not runtime proof, and
 neither is a confident peer.
 
-If the change is reachable through a running UI, exercise it with the harness's
-UI tool from the table above before accepting any claim about it. Use a throwaway
-profile and disposable data. If that proof cannot run, record it as unavailable —
-never let a green unit suite stand in for it.
+When the reviewed change is reachable through a running UI, the verdict waits on
+the browser. Drive it with the harness's UI tool from the table above, in a
+throwaway profile with disposable data: the changed journey end to end, plus one
+path that should fail. Record routes, actions, what was visible, and the console
+and network evidence.
+
+State the outcome as passed, failed, or unavailable with its reason. Unavailable
+means the UI claim is unverified — say so in the verdict rather than letting a
+green unit suite stand in for it.
 
 ## Authority
 

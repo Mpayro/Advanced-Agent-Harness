@@ -83,7 +83,6 @@ BASE_PHRASES = (
     # Findings are hypotheses; proof is real or absent, never substituted.
     "Verify every claim yourself before acting on it",
     "Every finding is a hypothesis",
-    "say so rather than substituting a green unit suite",
     # The three authorities never collapse into one.
     "Three authorities, granted separately, never inferred from each other",
     "Approval of the code is not approval of the release",
@@ -92,6 +91,11 @@ BASE_PHRASES = (
     "it is reversible, or its irreversibility was disclosed before it was authorized",
     # Isolation, handoff, and honest reporting.
     "A dirty shared checkout is not isolation",
+    # The browser check vanished once in a rewrite; it is asserted now.
+    "Last check \u2014 the product, in a browser",
+    "A product with a UI is not verified until someone drove it",
+    "Never the user's own profile",
+    "That is a stated outcome, not a silent skip",
     "Ask before commit",
     "never calls a finished release proposed",
     "Do not commit, push, merge, deploy, promote, or migrate unless the user",
@@ -125,6 +129,8 @@ AUTOMATIC_PHRASES = (
     "One pass, no retry",
     "Never push or merge as a side effect of committing",
     "never as a completed step",
+    "The base skill's last check is not optional here",
+    "an autonomous run may not commit a UI change that nobody drove",
 )
 
 PEER_PHRASES = (
@@ -141,7 +147,8 @@ PEER_PHRASES = (
     # Findings and proof.
     "Nothing, until you reproduce it",
     "Documentation is not runtime proof",
-    "never let a green unit suite stand in for it",
+    "the verdict waits on the browser",
+    "rather than letting a green unit suite stand in for it",
     # Authority and data boundary.
     "Read-only is the default, and a request to review never grants an edit",
     "This skill dispatches none of them with write access",
@@ -317,6 +324,16 @@ def main() -> int:
         "Make the smallest change at the root cause",
     ):
         errors.append("base: implementation precedes its approval")
+    if ordered_wrong(
+        base,
+        "Every finding is a hypothesis",
+        "Last check \u2014 the product, in a browser",
+    ) or ordered_wrong(
+        base,
+        "Last check \u2014 the product, in a browser",
+        "Ask before commit",
+    ):
+        errors.append("base: the browser check is not the last verification")
 
     errors.extend(contract_errors(automatic, AUTOMATIC_PHRASES, "automatic"))
     if ordered_wrong(
@@ -346,6 +363,7 @@ def main() -> int:
         "Approval of the code is not approval of the release",
         "A plan that never mentioned production does not acquire it later",
         "Three authorities, granted separately, never inferred from each other",
+        "A product with a UI is not verified until someone drove it",
     ):
         mutation_control(base, phrase, BASE_PHRASES, "base", errors)
     for phrase in (

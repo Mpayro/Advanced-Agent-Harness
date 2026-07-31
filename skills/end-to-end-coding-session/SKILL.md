@@ -85,9 +85,7 @@ one explicit boundaries.
 
 Prove it as you go: the narrow check for the change, then the sibling and
 lifecycle checks, then whatever the repo's conventions require. Non-trivial logic
-leaves one runnable check behind. If the change is reachable through a UI,
-exercise it with the harness's UI tool; if that proof cannot run, say so rather
-than substituting a green unit suite.
+leaves one runnable check behind.
 
 Update the living plan as you go — decisions, surprises, and anything that turned
 out different from the plan.
@@ -106,6 +104,32 @@ documented, not silently absorbed.
 
 Offer the heavy `peer-bug-review` exactly once before handing off, and respect
 the answer. If it changes code, repeat beats 3 and 4 without re-offering.
+
+## Last check — the product, in a browser
+
+This runs last, after the review and before anything is handed off, committed, or
+released. A product with a UI is not verified until someone drove it.
+
+- Launch Chrome with a throwaway profile and remote debugging. Never the user's
+  own profile, never their logged-in session.
+- Walk the changed journey end to end, the way a person would — not one widget in
+  isolation. Then walk one path that should fail: empty, invalid, unauthorized,
+  refreshed mid-flow, or navigated back into.
+- Record the routes, the actions, what was actually visible, the console and
+  network evidence, and the state left behind. A screenshot alone proves the page
+  rendered, not that the feature works.
+- Use local or preview state and disposable data. Never a destructive or
+  production mutation without explicit authority.
+
+Three outcomes, and one of them must be stated out loud:
+
+- **Passed** — the journey and its negative path behaved as the plan said.
+- **Failed** — say what broke; it goes back to the previous beat.
+- **Unavailable** — say why (no browser, no environment, no fixture). The change
+  is then unverified on that surface, and it is reported that way.
+
+A change with no reachable UI records "no UI surface" and moves on. That is a
+stated outcome, not a silent skip. A green unit suite never substitutes for this.
 
 ## Authority
 

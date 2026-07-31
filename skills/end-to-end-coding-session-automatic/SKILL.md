@@ -91,6 +91,37 @@ any other staged bytes.
 If the heavy bug review changes code, re-verify and re-review once before
 committing, and compare digests again.
 
+## Last check — the product, in a browser
+
+This runs last, after the review and before anything is handed off, committed, or
+released. A product with a UI is not verified until someone drove it.
+
+- Launch Chrome with a throwaway profile and remote debugging. Never the user's
+  own profile, never their logged-in session.
+- Walk the changed journey end to end, the way a person would — not one widget in
+  isolation. Then walk one path that should fail: empty, invalid, unauthorized,
+  refreshed mid-flow, or navigated back into.
+- Record the routes, the actions, what was actually visible, the console and
+  network evidence, and the state left behind. A screenshot alone proves the page
+  rendered, not that the feature works.
+- Use local or preview state and disposable data. Never a destructive or
+  production mutation without explicit authority.
+
+Three outcomes, and one of them must be stated out loud:
+
+- **Passed** — the journey and its negative path behaved as the plan said.
+- **Failed** — say what broke; it goes back to the previous beat.
+- **Unavailable** — say why (no browser, no environment, no fixture). The change
+  is then unverified on that surface, and it is reported that way.
+
+A change with no reachable UI records "no UI surface" and moves on. That is a
+stated outcome, not a silent skip. A green unit suite never substitutes for this.
+
+The base skill's last check is not optional here, and it is not the reviewer's
+job. Run it before the commit. A required browser check that came back failed or
+unavailable blocks the auto-commit: an autonomous run may not commit a UI change
+that nobody drove.
+
 ## Beat 5 — the authorized release
 
 Announce this step as `release` when the consent named one; a run with no release
