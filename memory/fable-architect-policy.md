@@ -31,7 +31,7 @@ Fable root, plus guardrails that only existed as advice in text.
   adversarial Opus subagent — alongside the other opening questions, and reuse
   that answer at every gate of that run. Never halt mid-run to ask who reviews;
   the answer does not cross runs. No Codex installed, no question: Opus. The
-  table lives in `coding-peers` §3b, where the slugs name a tier, not a version.
+  table lives in the `coding-peers` peer table, where the slugs name a tier, not a version.
 - `autoCompactWindow: 750000` in settings.json is the "don't crash on a long
   session" setting. It is deliberately expensive; a lower value (~450000) costs
   less and compacts more often. Pick knowingly.

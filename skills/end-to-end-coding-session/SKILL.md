@@ -1,418 +1,160 @@
 ---
 name: end-to-end-coding-session
-description: Use when the user explicitly wants a multi-stage coding objective handled end to end with a human-approved plan, a living execution artifact, an explicit persistent-continuation or single-run choice, isolated implementation, verification, adversarial review, one optional heavy Peer Bug Review choice, and a handoff that stops before commit unless the approved plan carries authorized release steps. Triggers include "end-to-end coding session", "handle this objective end to end", "plan it and implement after I approve", "use a persistent goal", "córrelo en loop", and broad cross-module feature or refactor work. Do not use for a small bounded review, an explicitly automatic auto-commit workflow, or an exhaustive unknown bug hunt.
+description: Take a coding objective through four beats — a peered plan, an adversarial review of that plan, a peered implementation, and an adversarial review of the result — then hand off before commit unless the plan carried release steps the user authorized. Use when the user wants a multi-stage or cross-module change handled end to end with a plan they approve first. Do not use for a single bounded review, for the autonomous auto-commit variant, or for an exhaustive bug hunt.
 ---
 
 # End-to-End Coding Session
 
-## Boundary
-
-This is a human-gated workflow that runs in either harness. Human-gated is the
-default for long work. The `coding-peers` §3b table resolves every peer, model,
-and tool from the harness detected at runtime; never route work to a provider
-outside it and External Peers. Respect stricter user, repo, data, and model
-rules.
-
-The workflow produces a tested, reviewed branch and stops before commit, unless
-the approved plan carries release steps the user authorized — then it carries
-those out under the same gates. See Release And Production Actions. It asks
-exactly once whether to run the optional heavy `peer-bug-review`.
-
-Use Ponytail full: understand the real flow, then make the smallest root-cause
-change. Use Superpowers skills only when the user explicitly requests them or the
-repo requires them.
-
-The outer session owns routing, the selected persistence mode, the continuation
-handle when used, and the terminal review state.
-Sub-skills return bounded results; they do not start another outer workflow.
-
-## Persistence Handle
-
-Long work needs one handle so the run survives compaction and interruption. That
-handle has a different name in each harness, so this skill calls the choice
-`persistence_mode` and resolves the mechanism from the tools actually available:
-
-| Available tools | Handle | Open | Read | Close |
-|---|---|---|---|---|
-| `create_goal`/`get_goal`/`update_goal` | goal | `create_goal` | `get_goal` | `update_goal(complete\|blocked)` |
-| `ScheduleWakeup` | loop | `/loop`, re-armed each turn | canonical living plan plus the armed wakeup | `ScheduleWakeup(stop: true)` |
-
-- `persistence_mode=persistent` opens the handle this harness has. Never invent
-  goal state where no goal tool exists, and never arm a loop the user did not
-  invoke or authorize in the alignment gate. If neither handle is available, say
-  so and run `persistence_mode=none`.
-- `persistence_mode=none` opens no handle; the living plan alone carries continuity.
-- With a loop handle the canonical living plan *is* the objective record, so it
-  must carry what a goal would hold: `workflow_owner`, `living_plan`,
-  `terminal_contract`, and `persistence_mode`.
-- Name the concrete handle out loud when asking or reporting: goal, or loop.
-- A handle counts as available only if it actually holds. The loop handle
-  depends on the harness re-arming it, and today it does not hold reliably in
-  Claude. When it does not, say so and run `persistence_mode=none`: the living
-  plan already carries continuity. Never report a run as persistent on a handle
-  that is not re-arming.
-
-## Step 0/8 — Route And Check Existing State
-
-Start every progress update with:
-
-`Skill step <N>/8 - <step name>: <short status>.`
-
-Choose one lane before doing substantial work:
-
-| Request | Lane |
-|---|---|
-| Small, settled plan/diff/artifact needing a second opinion | `coding-peers`; no handle |
-| Multi-stage or cross-module implementation | This workflow |
-| Explicit autonomous branch auto-commit | `end-to-end-coding-session-automatic` |
-| Unknown/exhaustive repo or UI bug hunt | `peer-bug-review` |
-
-An explicit request to use this full workflow overrides the small-task shortcut.
-Return a routing recommendation rather than recursively invoking another outer
-workflow.
-
-Read the continuation handle before presenting a new persistence-mode choice:
-`get_goal` where goal tools exist, otherwise the canonical living plan plus any
-armed loop.
-
-- No unfinished run: continue.
-- Matching unfinished run: resume only when it also records the same
-  `workflow_owner`, `living_plan`, `terminal_contract`, and
-  `persistence_mode=persistent`; do not repeat completed investigation, re-ask
-  the persistence question, or open a second handle.
-- Same outcome but different workflow owner, plan identity, or terminal contract:
-  treat it as a different unfinished run.
-- Different unfinished run: do not overwrite, complete, or close it. Stop for the
-  user's explicit decision about that run.
-
-If a matching living plan already records a user-selected `persistence_mode=none`,
-resume from it without re-asking or opening a handle. Never change modes silently.
-
-Inspect repo instructions, current branch/worktree, and dirty state read-only.
-
-## Step 1/8 — Ground And Confirm Alignment
-
-Gather only the context needed to restate the objective:
-
-- For a localized or skill-only change, use one direct scan.
-- For broad or ambiguous repo work, use up to three complementary, read-only
-  cheap-tier explorers: repo/instructions, code path/callers, and tests/tooling.
-- For a true repo overview, use all three. Never create fake parallelism for the
-  same question.
-- Reuse an installed repo index if present. Do not install one for this scan;
-  otherwise use structural search and `rg`.
-
-Present a compact checklist:
-
-- Outcome the user wants.
-- In-scope tasks and explicit non-goals.
-- Assumptions and constraints.
-- Acceptance evidence.
-- Ambiguities that could change behavior or authority.
-- Persistence disclosure: the user must choose `persistence_mode=persistent` or
-  `persistence_mode=none`; both modes keep the living plan and stop before commit,
-  and neither one grants release authority — only the plan and this gate do.
-- Adversarial peer, when the `coding-peers` table offers a choice in this
-  harness. Settle it here so the later gates never interrupt the run.
-- External-peer availability, checked here per the `coding-peers` External Peers
-  section. If the key is missing, say so now with the setup pointer — never at
-  the review gate, after the user has waited for the whole run.
-- Release steps, whenever the objective plausibly reaches production. Name each
-  action here and get it authorized here. Nothing later in the run can grant that
-  authority, so an unasked release is an unauthorized one.
-
-The first alignment response must recommend one mode and ask, naming the handle
-this harness would open (`goal`, or `loop`):
-
-`¿Quieres ejecutarlo con continuidad persistente (<handle>) o sin ella? Recomiendo <modo> porque <razón breve>.`
-
-- Recommend `persistent` when the work is long, complex, multi-stage,
-  cross-module, interruption-prone, or likely to span compaction.
-- Recommend `none` when the work is simple, bounded, low-risk, and likely to
-  finish in one continuous run.
-- Do not infer the choice from the recommendation. Wait for the user's explicit
-  selection.
-
-Ask the user to confirm the interpretation, the persistence mode, and the
-adversarial peer in the same alignment gate. Record the peer in the living plan
-and reuse it for every gate in this run; never stop mid-run to re-ask. For
-`persistent`, explicitly record the authorization to open that handle. For `none`, record the opt-out and skip every open/close call. Do
-not add a separate ceremony for it. Do not edit product files yet.
-
-## Step 2/8 — Orient And Preflight
-
-Read the real source-of-truth path end to end:
-
-- Repo instructions, relevant docs, code, callers, tests, and generated artifacts.
-- `git status`, current branch, linked worktrees, and ownership of existing dirt;
-  inventory index and worktree dirt separately before task edits.
-- Producer -> source version/freshness -> consumer lineage for generated outputs.
-- Existing test, lint, typecheck, browser, database, and deployment conventions.
-
-For stateful or data-model work, identify before planning:
-
-- Stable identities and legal state transitions.
-- Conservation/idempotency rules.
-- Every authoritative reader and writer.
-- Cache invalidation, restart/recovery, rollback, and audit history.
-
-For user-facing work, plan an isolated Chrome profile with remote debugging.
-For real operational data, separate read-only proof from authorized mutation.
-
-If the request is still materially ambiguous, ask one short question. Otherwise
-record the conservative assumption in the plan.
-
-## Step 3/8 — Build And Adversarially Review A Living Plan
-
-Create a living execution plan. Prefer the repo's plan convention; otherwise use:
-
-`docs/superpowers/plans/YYYY-MM-DD-<short-goal>.md`
-
-The artifact must contain:
-
-- Goal, non-goals, scope, and acceptance evidence.
-- Architecture/seams and smallest correct change.
-- State transitions and business invariants when relevant.
-- Producer/consumer lineage, source freshness, and artifact provenance.
-- Ordered checkbox tasks and verification commands.
-- Release steps when the objective reaches production, each with its own
-  acceptance evidence and rollback. Release condition 1 cannot be satisfied by a
-  plan that has no slot for them.
-- Progress, decisions, surprises/blockers, review rounds, and
-  `terminal_peer_review_state`.
-- The user-selected `persistence_mode` and its recommendation rationale.
-
-Use `coding-peers` as a read-only subprotocol on the full plan artifact. Use one
-fresh adversarial reviewer by default, chosen per the `coding-peers` peer
-table; add a second parallel reviewer only for a
-distinct risk lane. The reviewer receives the real plan, not a coordinator
-summary, and tries to refute hidden scope, missing tests, business/data risk,
-and simpler alternatives.
-
-Once the plan is final, also send it to the external peers per the
-`coding-peers` External Peers section, when the opening gate found them
-available. A third-party reader has none of this session's assumptions and is
-the cheapest place to catch a wrong premise — before any code exists.
-
-Verify each peer claim, external ones included. Revise only for confirmed issues
-and record accepted, rejected, or deferred feedback in the living plan. Limit
-plan review to two revisions; a repeated authority blocker returns to the user.
-
-## Step 4/8 — Present Plan And Get Implementation Approval
-
-Show at most five plain-language bullets: outcome, protected rule, proof, scope
-boundary, and saved plan path — plus one more naming every release step when the
-plan carries any. End by asking for explicit implementation approval, and ask for
-release authorization separately whenever release steps exist.
-
-Do not edit product code until the user approves.
-
-After approval:
-
-- For `persistence_mode=persistent`, re-read the handle. If no unfinished run
-  exists, open it on the Step-1-authorized objective: outcome, in/out scope,
-  acceptance evidence, and the terminal condition — pre-commit, or post-release
-  when the plan carries authorized release steps. Record
-  `workflow_owner=end-to-end-coding-session`, `persistence_mode=persistent`, the
-  canonical `living_plan` path, and that `terminal_contract` — in the goal
-  objective where goal tools exist, in the living plan where the handle is a
-  loop. Resume an exact match; stop for the user if a different run exists.
-- For `persistence_mode=none`, open no handle and mutate no handle state.
-  Continue from the living plan and isolated worktree.
-
-Never set `token_budget` unless the user supplied one.
-
-## Step 5/8 — Implement On An Isolated Branch
-
-Create or confirm a safe `agent/<short-goal>` linked worktree unless the user or
-repo explicitly requires in-place work. Merely switching branches in a dirty
-worktree is not isolation. Preserve unrelated dirt.
-
-Record a task-owned patch manifest from exact task hunks, not only paths. When
-in-place work is required, this saved patch is the review boundary; never stage
-or commit unrelated index/worktree changes.
-
-Immediately after worktree creation, run an environment-legibility preflight:
-
-- Required non-secret local config is present or its absence is documented.
-- Tests collect/start through the repo's pinned toolchain.
-- Required database/browser/service endpoints are reachable when live proof is
-  part of acceptance.
-
-Unavailable live proof is `blocked/unavailable`, never silently equivalent to a
-passing unit test.
-
-Implement the approved plan continuously:
-
-1. Add the smallest failing check for changed behavior.
-2. Confirm it fails for the intended reason.
-3. Make the minimal root-cause change.
-4. Run the narrow check.
-5. Update plan progress, decisions, and surprises.
-
-Use subagents only for independent slices with explicit file ownership. Tell each
-worker it is not alone and must preserve others' edits. Do not stop between
-planned tasks. Stop only for a genuinely new scope/authority decision the user
-must make.
-
-## Step 6/8 — Verify The Outcome
-
-Map every acceptance claim to evidence:
-
-- Targeted unit/integration checks for changed behavior.
-- Typecheck/lint only when relevant or customary.
-- Full suite only when blast radius or repo convention justifies it.
-- Generated artifact checks against producer, source freshness, consumer, and
-  measurable business invariants.
-
-If the implementation builds or alters UI, or the changed behavior is reviewable
-through a running UI, validate it with the harness's UI proof tool from
-`coding-peers` §3b before Step 7:
-
-- Launch Chrome with a temporary profile and remote debugging; never reuse the
-  user's normal browser profile for this smoke.
-- Exercise the affected route and changed journey, plus one relevant negative or
-  boundary path. Check the visible result rather than only DOM/code assertions.
-- Use local/preview state and disposable test data. Do not perform destructive or
-  production mutations without explicit authority.
-- Record exact routes, actions, observed results, screenshots/logs when useful,
-  and any inaccessible state.
-
-If required UI proof cannot run, record `blocked/unavailable`; do not mark the UI
-verified or substitute a green unit suite for product proof.
-
-Record separately:
-
-- `verified`
-- `blocked/unavailable`
-- `user-directed stop`
-- `documented adjacent finding`
-
-A consumer-only rerun from stale inputs may be successful but is not proof that
-the upstream fix reached the output.
-
-## Step 7/8 — Final Adversarial Review
-
-Freeze the actual review target:
-
-- Git repo: save and SHA-256 hash the exact task-owned patch bytes. Save one
-  canonical review manifest containing that patch path/digest plus exact base/head
-  when applicable; the reviewer attests to the manifest digest/path.
-- Non-git files: canonical paths plus SHA-256 manifest.
-- Generated output: artifact plus provenance and acceptance metrics.
-
-Dispatch a fresh adversarial reviewer with no prior conclusions, chosen per the
-`coding-peers` peer table and invoked per its Runner section. Require review of the
-real target and any required Computer Use evidence for correctness, missed
-requirements, security/data risk, over-engineering, and missing proof. Apply
-Ponytail review to remove speculative layers.
-
-Send the same frozen target to the external peers per the `coding-peers`
-External Peers section, when the opening gate found them available. This is the
-second and last external consultation: the plan was reviewed before the code
-existed, and this reviews what was actually built against it.
-
-Treat every finding as a hypothesis. Reproduce it in code/runtime, fix only
-confirmed in-scope defects, re-run mapped checks, and re-review once. Adjacent
-findings are documented, not silently added to scope.
-
-## Step 8/8 — Optional Heavy Review And Pre-Commit Handoff
-
-The outer session owns `terminal_peer_review_state`.
-
-If absent, atomically set it to `pending` and ask exactly once:
-
-`¿Quieres correr ahora Peer Bug Review pesado antes del commit? Audita el cambio y sus superficies afectadas con inventario, probes y revisión adversarial; puede tardar y consumir bastantes tokens. Responde sí o no.`
-
-- While `pending`, wait. Do not ask again, commit, or claim completion.
-- On **no**, set `declined`.
-- On **yes**, set `accepted` and run `peer-bug-review` once in embedded mode over
-  the final change and affected product surfaces. Disable recursive heavy-review
-  offers. Repair only confirmed bugs inside approved scope.
-- If it changes code, repeat Steps 6 and 7 without re-offering, then set
-  `completed`.
-- If it accepts unchanged, set `completed`.
-- If incomplete, set `terminal_peer_review_state=blocked` and report the exact
-  missing authority/environment.
-
-Enter the handoff only from `declined` or `completed`. Report changed behavior,
-exact verification, remaining risk, heavy-review outcome, branch/dirty state,
-the saved task-owned patch, explicitly excluded unrelated dirt, and the proposed
-commit/push/merge steps. Ask before commit.
-
-Commit authority is not release authority; never infer one from the other. If the
-approved plan carries release steps, ask for them separately, naming each action,
-and execute only the ones the user names in that answer. Then report what reached
-production and what did not.
-
-Only in `persistence_mode=persistent`, close the handle as complete when the
-tested/reviewed branch and resolved heavy-review choice have reached this
-terminal condition — before commit, or after the plan's authorized release steps
-finished when the plan carried them. A run that reached production never closes
-on a pre-commit terminal state. Close it as blocked only after the same real
-blocker recurs for at least three consecutive handle turns. A blocked terminal
-review state alone does not authorize a blocked close.
-
-In `persistence_mode=none`, close nothing; report the equivalent workflow
-terminal or blocked state without creating handle state.
-
-## Release And Production Actions
+Four beats, in order:
+
+1. **Plan, peered** — cheap agents gather the real context; you write the plan.
+2. **Adversarial review of the plan** — a fresh peer tries to break it.
+3. **Implementation, peered** — build it on an isolated branch, with proof.
+4. **Adversarial review of the result** — a fresh peer tries to break that.
+
+Everything below serves those four. `coding-peers` decides who every peer is,
+how to reach it, and what a verdict must look like; this skill never names a
+model.
+
+## Before the first beat
+
+Restate the objective in plain language and put it in front of the user: the
+outcome, what is explicitly out of scope, the assumptions you are making, what
+will count as acceptance evidence, and any ambiguity that would change behaviour
+or authority. Ask about the ambiguity now — one short question beats a wrong
+plan.
+
+Settle three things in that same first exchange, because each one interrupts the
+run if you leave it for later:
+
+- Which adversarial peer, when `coding-peers` offers a choice in this harness.
+- Whether external peers are available, per its External Peers section.
+- Which release steps, if any, the objective reaches — named one by one and
+  authorized here. Nothing later in the run can grant that authority.
+
+Then write the living plan at `docs/superpowers/plans/YYYY-MM-DD-<goal>.md`, or
+wherever the repo keeps plans. It is the only record of continuity: everything
+that must survive an interruption goes in it, and it is updated as the run
+proceeds, not at the end.
+
+Read the repo before planning: instructions, the real code path and its callers,
+tests, `git status`, and the lineage of anything generated. For a broad or
+unfamiliar surface, send up to three read-only cheap-tier explorers down separate
+lanes — repo conventions, code path, tests and tooling. Never fake parallelism by
+asking several agents the same question.
+
+## Beat 1 — Plan, peered
+
+The plan states the goal and non-goals, the smallest change that reaches it, the
+seams it touches, the state transitions and invariants that must hold, ordered
+tasks with the command that verifies each, and what would falsify the approach.
+
+For stateful work, name the identities, the legal transitions, every authoritative
+reader and writer, and what happens on restart, retry, and rollback. For anything
+generated, name the producer, the source and its freshness, and the consumer.
+
+If the plan carries release steps, each one gets its own acceptance evidence and
+its own rollback, written here.
+
+## Beat 2 — Adversarial review of the plan
+
+Freeze the plan and hand the real artifact to a fresh peer with no prior
+conclusions. Ask it to find hidden scope, missing tests, business or data risk,
+and a simpler seam that already exists. When external peers are available, send
+them the same frozen plan — a reader with none of your assumptions is cheapest
+here, before any code exists.
+
+Verify every claim yourself before acting on it. Revise for confirmed issues,
+record what you accepted and rejected in the living plan, and stop for the user
+when the same authority question comes back twice.
+
+Then show the user at most five plain bullets — outcome, the rule you are
+protecting, the proof, the scope boundary, the plan path — plus one naming each
+release step if there are any. Ask for implementation approval, and ask for
+release authorization separately.
+
+## Beat 3 — Implementation, peered
+
+Work on an isolated `agent/<goal>` branch or linked worktree unless the user or
+repo requires in-place work. A dirty shared checkout is not isolation; preserve
+unrelated dirt and never stage it.
+
+Make the smallest change at the root cause. Grep every caller before patching one
+path. Delegate slices to peers only when file ownership is disjoint, and give each
+one explicit boundaries.
+
+Prove it as you go: the narrow check for the change, then the sibling and
+lifecycle checks, then whatever the repo's conventions require. Non-trivial logic
+leaves one runnable check behind. If the change is reachable through a UI,
+exercise it with the harness's UI tool; if that proof cannot run, say so rather
+than substituting a green unit suite.
+
+Update the living plan as you go — decisions, surprises, and anything that turned
+out different from the plan.
+
+## Beat 4 — Adversarial review of the result
+
+Freeze the exact patch bytes with their SHA-256 and hand a fresh peer the real
+diff, the verification output, and the approved plan. Ask for correctness, missed
+requirements, security and data risk, over-engineering, and missing proof. Send
+the same frozen target to the external peers when available — this is the second
+and last external consultation.
+
+Every finding is a hypothesis. Reproduce it, fix only confirmed defects that are
+in scope, re-run the mapped checks, and re-review once. Adjacent problems get
+documented, not silently absorbed.
+
+Offer the heavy `peer-bug-review` exactly once before handing off, and respect
+the answer. If it changes code, repeat beats 3 and 4 without re-offering.
+
+## Authority
+
+Three authorities, granted separately, never inferred from each other:
+
+- **Edit** comes from the user approving the plan.
+- **Commit** comes from asking at the handoff.
+- **Release** comes only from the naming in the first exchange.
+
+Approval of the code is not approval of the release. A plan that never mentioned
+production does not acquire it later, and no peer can grant it.
+
+## Release and production
 
 Touching production is scope, not a forbidden category. Deploying, promoting,
-merging, pushing, and running a migration are ordinary steps when they are what
-the work is for. Refusing them on principle would make the workflow useless for
-the moment it matters most.
+merging, pushing, and migrating are ordinary steps when they are what the work is
+for. A release step runs when all four hold: the approved plan names it with its
+own acceptance evidence and rollback; the user authorized that exact action; the
+gates guarding it accepted; and it is reversible, or its irreversibility was
+disclosed before it was authorized.
 
-An action that reaches production runs when all four hold:
+Run them in the plan's order, verify each before starting the next, and stop at
+the first failure with the rollback state stated.
 
-1. The approved plan names it, with its own acceptance evidence and rollback.
-2. The user authorized that exact action for this run, naming it.
-3. Every gate guarding it accepted: verification, adversarial review, and
-   product proof.
-4. It is reversible, or its irreversibility was disclosed and accepted before
-   authorization.
+## Handoff
 
-Nothing else grants it. A plan that never mentions production does not acquire
-it later; a reviewer cannot authorize it; approval of the code is not approval
-of the release. Widening scope mid-run to include a release is the one thing
-this section forbids.
+Report what changed and what it means for the user, the exact verification you
+ran, what you could not prove, the branch and dirty state, the saved patch, the
+dirt you deliberately excluded, and the proposed commit and push steps. Ask
+before commit.
 
-Run release steps in the plan's order, verify each before the next, and stop at
-the first failure with the rollback state stated. Report what reached production
-and what did not.
-
-## Stage Limits
-
-| Stage | Limit | Stop condition |
-|---|---:|---|
-| Plan review | 2 revisions | Same authority blocker repeats |
-| Failing check | 3 attempts | Root cause remains unclear or failure changes |
-| Final diff review | 2 rounds | No new confirmed in-scope defect |
-| External peer consultation | 1 retry | Repeated empty/error/timeout |
-| Authorized release | 1 pass, no retry | Stop at first failure, state rollback |
-| Heavy Peer Bug Review | 1 offer, 1 embedded run | Declined, completed, or blocked |
-
-Repeat only the failed stage. Resume from the living plan after compaction, and
-from the continuation handle only in `persistence_mode=persistent`; never restart
-the whole workflow unless the user's objective changes.
-
-## Final Response
-
-Include:
-
-- Changed: plain-language outcome.
-- Verified: exact commands and smoke paths.
-- Remaining risk or unavailable proof.
-- Heavy Peer Bug Review state/verdict.
-- Persistence mode and handle state; report `not used by user choice` for
-  `persistence_mode=none`.
-- Branch and dirty/clean state.
-- Proposed commit, push/PR/merge, and cleanup plan.
-- Release steps, each as executed, failed with its rollback state, not reached,
-  or — only when the user never authorized it — proposed.
-- Skill-use summary: followed, changed/skipped with reason, stage retry counts,
-  what worked, and what failed.
+Report each release step as executed, failed with its rollback state, not
+reached, or — only when the user never authorized it — proposed. A run that
+reached production says so plainly and never calls a finished release proposed.
 
 Do not commit, push, merge, deploy, promote, or migrate unless the user
-explicitly asks. A run that reached production says so plainly; it never reports
-a completed release as proposed.
+explicitly asks.
+
+## Limits
+
+| Stage | Limit | Stop when |
+|---|---:|---|
+| Plan review | 2 revisions | The same authority blocker repeats |
+| Failing check | 3 attempts | The root cause is still unclear |
+| Result review | 2 rounds | No new confirmed in-scope defect |
+| External peer | 1 retry | Repeated empty or failed response |
+| Heavy bug review | 1 offer, 1 run | Declined, finished, or blocked |
+| Authorized release | 1 pass, no retry | First failure, rollback state stated |
+
+Repeat only the stage that failed. Never restart the whole run because one stage
+did. When a stage exhausts its limit, say what is blocked and hand the decision
+back to the user.

@@ -47,6 +47,6 @@ smoke as a passing test.
 
 The installer keeps matching folders under `~/.claude/skills`, byte identical to
 the Codex copies — the validator fails a stale mirror. They are identical
-because the skills are harness-neutral: `coding-peers` §3b resolves the peer,
+because the skills are harness-neutral: the `coding-peers` peer table resolves the peer,
 model, and tool from whichever harness is running. Without Codex installed, the
 adversarial gate falls to an Opus subagent and the rest still works.

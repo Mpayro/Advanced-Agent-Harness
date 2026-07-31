@@ -127,7 +127,7 @@ The installer must inspect existing skills first, back up collisions, install
 the selected folders under `~/.codex/skills`, keep the `.claude` mirrors
 aligned, and run the bundled validators.
 
-The workflow skills run in either harness; `coding-peers` §3b resolves peers and tools from the one detected at runtime. The optional files under `hooks/` and
+The workflow skills run in either harness; the `coding-peers` peer table resolves peers and tools from the one detected at runtime. The optional files under `hooks/` and
 `memory/` are retained for people who also use Claude Code; they are not
 required for the Codex workflows.
 

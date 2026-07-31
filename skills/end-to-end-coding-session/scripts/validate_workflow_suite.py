@@ -68,131 +68,122 @@ def remove_contract_phrase(text: str, phrase: str) -> str:
 
 
 BASE_PHRASES = (
-    "Human-gated is the default",
-    "Read the continuation handle before",
-    "`workflow_owner`, `living_plan`, `terminal_contract`, and",
-    "do not overwrite, complete, or close it",
-    "explicitly record the authorization to open",
-    "`persistence_mode=persistent` opens the handle this harness has",
-    "`persistence_mode=persistent` or",
-    "`persistence_mode=none`",
-    "Recommend `persistent`",
-    "Recommend `none`",
-    "Do not infer the choice",
-    "skip every open/close call",
-    "inventory index and worktree dirt separately",
-    "exact task-owned patch bytes",
-    "validate it with the harness's UI proof tool from `coding-peers` §3b before Step 7",
-    "temporary profile and remote debugging",
-    "do not mark the UI verified",
-    "Only in `persistence_mode=persistent`, close the handle as complete",
-    "three consecutive handle turns",
-    "living execution plan",
-    "`terminal_peer_review_state`",
-    "`coding-peers`; no handle",
+    # The shape itself.
+    "Four beats, in order",
+    "Plan, peered",
+    "Adversarial review of the plan",
+    "Implementation, peered",
+    "Adversarial review of the result",
+    "this skill never names a model",
+    # Nothing is decided mid-run that could have been decided up front.
+    "Settle three things in that same first exchange",
+    "Which release steps, if any, the objective reaches",
+    "Nothing later in the run can grant that authority",
+    "It is the only record of continuity",
+    # Findings are hypotheses; proof is real or absent, never substituted.
+    "Verify every claim yourself before acting on it",
+    "Every finding is a hypothesis",
+    "say so rather than substituting a green unit suite",
+    # The three authorities never collapse into one.
+    "Three authorities, granted separately, never inferred from each other",
+    "Approval of the code is not approval of the release",
+    "A plan that never mentioned production does not acquire it later",
     "Touching production is scope, not a forbidden category",
-    "Commit authority is not release authority; never infer one from the other",
-    "The user authorized that exact action for this run, naming it",
-    "It is reversible, or its irreversibility was disclosed and accepted",
-    "Release steps, whenever the objective plausibly reaches production",
+    "it is reversible, or its irreversibility was disclosed before it was authorized",
+    # Isolation, handoff, and honest reporting.
+    "A dirty shared checkout is not isolation",
     "Ask before commit",
+    "never calls a finished release proposed",
     "Do not commit, push, merge, deploy, promote, or migrate unless the user",
-    "A plan that never mentions production does not acquire it later",
-    "`end-to-end-coding-session-automatic`",
-    "`peer-bug-review`",
+    "Repeat only the stage that failed",
 )
 
 AUTOMATIC_PHRASES = (
-    "explicit-opt-in workflow",
-    "does not invoke a nested base workflow",
-    "replace its handle timing and stop-before-commit disclosure",
-    "explicitly confirms",
-    "persistence mode",
-    "eligibility-before-handle",
-    "without opening an Automatic handle",
-    "`workflow_owner=end-to-end-coding-session-automatic`",
-    "auto-commit authority",
-    "generic \"implement it\" is insufficient",
-    "Recommend `persistent`",
-    "Recommend `none`",
-    "Do not infer the choice",
-    "open no handle and make no handle-state transitions",
-    "Limit: ten plan-gate attempts",
-    "| Plan approval | 10 fresh reviewers |",
-    "immutable `approved_plan_target`",
-    "APPROVED_PLAN: <sha256> <canonical-path>",
-    "mechanically compare both `APPROVED_PLAN` digest",
-    "atomically set it to `pending`",
-    "after that gate accepts, set `completed`",
-    "sole staging input",
-    "cached diff digest equals the accepted code-gate patch",
-    "require the base Step 6 Computer Use smoke",
-    "temporary profile and remote debugging",
-    "Do not advance to the code gate or auto-commit when required UI proof is missing",
-    "Only in `persistence_mode=persistent`, close the handle as complete",
-    "three consecutive handle turns",
-    "Commit authority is not release authority",
-    # A release the consent gate authorized must have a step that performs it.
-    "The plan contains a production, destructive, or irreversible step the consent gate never named",
+    "Same four beats",
+    "What changes is who approves",
+    "Human-gated remains the default for long work",
+    # Consent is explicit, complete, and never inferred.
+    "Consent, once, up front",
+    "run automatically only if named right here",
+    "A generic \"implement it\" is not this consent",
+    "an autonomous run that stops at its own review gate to ask who reviews is not autonomous",
+    # The mode refuses itself when it should.
+    "When to refuse the mode",
+    "a reviewer would have to invent intent to approve",
+    # The plan gate tests both directions, because it is the first moment the
+    # plan exists.
+    "Reject the plan outright, in either direction",
     "the plan does not carry that action's rollback and verification",
-    "A release step the consent gate named is never reported as proposed",
-    # Ordering-check anchors: asserted here so a rename cannot turn the
-    # comparisons below into -1 > -1 and pass vacuously.
-    "read the continuation handle before the first alignment",
-    "open the handle. Record outcome",
-    "After consent and before opening the handle",
-    "If eligible and `persistence_mode=persistent`, open the handle",
+    "a production, destructive, or irreversible step the consent never named",
+    "an autonomous run may not take that authority from its own plan",
+    # The commit is the accepted bytes and nothing else.
+    "using the accepted patch as the sole staging input",
+    "abort on any other staged bytes",
+    "any mismatch goes back to the user",
+    # Release authority is separate and consumable exactly once.
+    "Commit authority is not release authority; never infer one from the other",
+    "One pass, no retry",
+    "Never push or merge as a side effect of committing",
+    "never as a completed step",
 )
 
 PEER_PHRASES = (
-    "Read-only is the default",
-    "No persistent handle",
-    "**Repair authorized:**",
-    "Never infer Repair authority",
-    "Do not recursively invoke",
-    "Use one fresh adversarial reviewer by default",
-    "Use two parallel reviewers only when their lanes are truly independent",
-    "Require non-empty content on every label's same physical line",
-    "always save and SHA-256 hash the exact patch bytes",
-    "review manifest containing that patch path/digest",
-    "canonical review manifest",
-    "canonical review manifest is the one target identity for dispatch and response",
-    "validate it with the harness's UI proof tool from §3b before the verdict",
-    "temporary profile and remote debugging",
-    "do not accept the UI claim as verified",
-    "Under Review-only authority",
-    "Under Repair authority",
+    "A peer is a fresh reviewer with no memory of how the work was made",
+    "The harness you are running in picks the column, never the task",
+    "Slugs name a tier, not a version",
+    "This table is the only place any skill names a model",
+    "ask once at the start of the run which adversarial peer to use",
+    # The artifact under review is the real one, provably.
+    "Freeze the target before dispatch",
+    "A summary explains intent and cannot replace the thing under review",
+    "A malformed response is not a verdict",
+    "counterevidence against itself",
+    # Findings and proof.
+    "Nothing, until you reproduce it",
+    "Documentation is not runtime proof",
+    "never let a green unit suite stand in for it",
+    # Authority and data boundary.
+    "Read-only is the default, and a request to review never grants an edit",
+    "This skill dispatches none of them with write access",
+    "A key on disk is a capability, never a standing consent",
+    "it is a data boundary, not a formality",
+    # The runner and its liveness rules.
+    "Never pipe the output",
+    "Prompt over stdin",
+    "do not kill it while its output file grows",
 )
 
 PEER_BUG_PHRASES = (
-    # Honesty about what a bug hunt can promise.
-    "Promise evidence discipline, not mathematical absence of bugs",
-    "all enumerated surfaces were covered and all candidates were classified",
-    "Never convert exhaustion into acceptance",
-    # Model routing stays in one place.
-    "Slugs live only in `coding-peers` §3b; never pin a version here",
-    "Detect the harness from the runtime, not the skill path",
+    "The same four beats",
+    "Find, peered",
+    "Prove or kill, adversarially",
+    "Fix, peered",
+    "Review the assembled product",
+    # What may be promised.
+    "Evidence discipline, never the absence of bugs",
+    "Never say the repo has no bugs",
+    "Exhaustion is not acceptance",
     # Authority.
-    "a review request alone is not edit authorization",
-    "Explorers report `CANDIDATE`, never `BUG`, and never edit",
+    "A review request is not edit authorization",
     # Coverage cannot be improvised or back-filled.
-    "Never start with random file sampling",
-    "Candidates may only be added after that freeze",
-    "Reserve one concurrency slot for the coordinator",
+    "Record what is not observable as blocked",
+    "they never quietly add one",
+    "Never start from random file sampling",
     # Blind confirmation.
-    "Do not provide the finder\u2019s conclusion or intended fix",
-    "Only `CONFIRMED_BUG` advances to planning",
-    "Tests and old docs are evidence, not automatic product truth",
-    "the ledger rejects logical-identity, response-evidence, or frozen-target reuse",
-    "Never normalize an agent verdict manually",
-    "the post-fix review remains mandatory",
+    "never the finder's conclusion or intended fix",
+    "A verifier that knows the answer is not a second opinion",
+    "Only confirmed advances",
+    "Never normalize a verdict by hand",
     # Repair discipline.
-    "Reproduce RED on the baseline",
-    "Verify every reviewer claim locally before changing code",
-    "Serialize bugs that share files, state, schema, or business invariants",
-    "It is diagnostic evidence, not an approval authority",
-    "Do not restart the whole workflow when one stage fails",
-    "Do not expose the oracle to audit agents",
+    "reproduce the failure on the baseline",
+    "Verify every reviewer claim yourself before touching code",
+    "serialize anything sharing files, state, schema, or an invariant",
+    "The script does not enforce that list \u2014 you do",
+    "The post-fix review is never skipped",
+    # Closing honestly.
+    "Per-bug green is not product green",
+    "it stops the run from claiming coverage",
+    "Repeat only the stage that failed",
 )
 
 PEER_RESPONSE_LABELS = (
@@ -316,24 +307,30 @@ def main() -> int:
     errors.extend(contract_errors(base, BASE_PHRASES, "base"))
     if ordered_wrong(
         base,
-        "Read the continuation handle before",
-        "explicitly record the authorization to open",
+        "Which release steps, if any, the objective reaches",
+        "Run them in the plan's order",
     ):
-        errors.append("base: the handle is opened before it is read")
+        errors.append("base: release runs before it is authorized")
+    if ordered_wrong(
+        base,
+        "Ask for implementation approval",
+        "Make the smallest change at the root cause",
+    ):
+        errors.append("base: implementation precedes its approval")
 
     errors.extend(contract_errors(automatic, AUTOMATIC_PHRASES, "automatic"))
     if ordered_wrong(
         automatic,
-        "read the continuation handle before the first alignment",
-        "open the handle. Record outcome",
+        "Consent, once, up front",
+        "Reject the plan outright, in either direction",
     ):
-        errors.append("automatic: the handle is opened before it is read")
+        errors.append("automatic: the plan gate precedes consent")
     if ordered_wrong(
         automatic,
-        "After consent and before opening the handle",
-        "If eligible and `persistence_mode=persistent`, open the handle",
+        "Commit only after that acceptance",
+        "Run only after the commit exists",
     ):
-        errors.append("automatic: eligibility must precede opening the handle")
+        errors.append("automatic: release precedes the commit")
     if inherits_base_step_one(automatic):
         errors.append("automatic: inherits contradictory base Step-1 disclosure")
 
@@ -346,42 +343,31 @@ def main() -> int:
     errors.extend(peer_response_errors(peers))
 
     for phrase in (
-        "do not overwrite, complete, or close it",
-        "inventory index and worktree dirt separately",
-        "A plan that never mentions production does not acquire it later",
-        "Commit authority is not release authority; never infer one from the other",
-        "Release steps, whenever the objective plausibly reaches production",
-        "validate it with the harness's UI proof tool from `coding-peers` §3b before Step 7",
+        "Approval of the code is not approval of the release",
+        "A plan that never mentioned production does not acquire it later",
+        "Three authorities, granted separately, never inferred from each other",
     ):
         mutation_control(base, phrase, BASE_PHRASES, "base", errors)
     for phrase in (
-        "eligibility-before-handle",
-        "open no handle and make no handle-state transitions",
-        "Limit: ten plan-gate attempts",
-        "immutable `approved_plan_target`",
-        "atomically set it to `pending`",
-        "after that gate accepts, set `completed`",
-        "sole staging input",
-        "Do not advance to the code gate or auto-commit when required UI proof is missing",
-        "A release step the consent gate named is never reported as proposed",
+        "Reject the plan outright, in either direction",
+        "Commit authority is not release authority; never infer one from the other",
+        "Never push or merge as a side effect of committing",
     ):
         mutation_control(
             automatic, phrase, AUTOMATIC_PHRASES, "automatic", errors
         )
     for phrase in (
-        "Use one fresh adversarial reviewer by default",
-        "Use two parallel reviewers only when their lanes are truly independent",
-        "Require non-empty content on every label's same physical line",
-        "review manifest containing that patch path/digest",
-        "canonical review manifest is the one target identity for dispatch and response",
-        "validate it with the harness's UI proof tool from §3b before the verdict",
+        "A peer is a fresh reviewer with no memory of how the work was made",
+        "Read-only is the default, and a request to review never grants an edit",
+        "A key on disk is a capability, never a standing consent",
+        "Never pipe the output",
     ):
         mutation_control(peers, phrase, PEER_PHRASES, "coding-peers", errors)
     for phrase in (
-        "Never convert exhaustion into acceptance",
-        "a review request alone is not edit authorization",
-        "Candidates may only be added after that freeze",
-        "Verify every reviewer claim locally before changing code",
+        "Exhaustion is not acceptance",
+        "A review request is not edit authorization",
+        "Never start from random file sampling",
+        "The post-fix review is never skipped",
     ):
         mutation_control(
             texts.get("peer-bug-review", ""),
@@ -391,8 +377,8 @@ def main() -> int:
             errors,
         )
     split_response = peers.replace(
-        "FINDINGS: concise same-line summary or none",
-        "FINDINGS:\nconcise summary or none",
+        "FINDINGS: same-line summary or none",
+        "FINDINGS:\nsame-line summary or none",
         1,
     )
     if split_response == peers or not peer_response_errors(split_response):
@@ -413,8 +399,8 @@ def main() -> int:
     # Every path and section the skills tell an agent to read must exist. The
     # suite reads only SKILL.md, so a deleted reference or a renamed heading is
     # otherwise invisible.
-    if "## 3b." not in peers:
-        errors.append("coding-peers: §3b heading missing; three skills point at it")
+    if "## Who reviews" not in peers:
+        errors.append("coding-peers: the peer table heading is missing")
     for relative in (
         "peer-bug-review/references/evidence-contract.md",
         "peer-bug-review/references/detection-and-evaluation.md",
