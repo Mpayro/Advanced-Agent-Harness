@@ -46,6 +46,11 @@ handle has a different name in each harness, so this skill calls the choice
   must carry what a goal would hold: `workflow_owner`, `living_plan`,
   `terminal_contract`, and `persistence_mode`.
 - Name the concrete handle out loud when asking or reporting: goal, or loop.
+- A handle counts as available only if it actually holds. The loop handle
+  depends on the harness re-arming it, and today it does not hold reliably in
+  Claude. When it does not, say so and run `persistence_mode=none`: the living
+  plan already carries continuity. Never report a run as persistent on a handle
+  that is not re-arming.
 
 ## Step 0/8 — Route And Check Existing State
 
