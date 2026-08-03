@@ -10,9 +10,10 @@ review of it, a peered implementation, an adversarial review of the result. Read
 that skill; this one only says what changes.
 
 What changes is who approves. A fresh reviewer approves the plan and the final
-diff instead of the user, and the accepted diff is committed automatically to an
-isolated branch. Everything else — the peer table, the release conditions, the
-verification discipline, the limits — is inherited unchanged.
+diff instead of the user, and the commit the reviewer accepted — already on an
+isolated branch, because the work is checkpointed as it goes — is declared the
+delivered state without asking again. Everything else — the peer table, the release
+conditions, the verification discipline, the limits — is inherited unchanged.
 
 Exactly one base rule is superseded, and naming it is the point: the base tells you
 to ask before committing, at the handoff. Here that asking already happened, in the
@@ -110,10 +111,16 @@ resolved. **What lands is that recorded sha — not the branch, not its tip.**
 Anything committed afterwards, living-plan updates included, is simply not part of
 what landed; it stays on the branch for the next round.
 
-Landing means declaring that sha the delivered state of the branch and naming it in
-the handoff. Withholding a landing is therefore not silence: the branch keeps its
-bytes, nothing is reset or discarded, and the handoff says the run delivered nothing
-and which gate withheld it.
+Landing means declaring that sha the delivered state of the branch, and declaring it
+in git rather than in prose: `git tag landed/<goal> <sha>`, local, never pushed. The
+handoff then names it. That order matters for the same reason the checkpoints exist
+— a turn can be killed without writing its handoff, and a landing that lives only in
+the handoff is a landing that dies with it, leaving every byte intact and no way to
+recover which commit was the accepted one. The tag survives; prose does not.
+
+Withholding a landing is therefore not silence and not a lost tag: the branch keeps
+its bytes, nothing is reset or discarded, no tag is written, and the handoff says
+the run delivered nothing and which gate withheld it.
 
 That is the whole gate, and it is shaped this way on purpose. Every earlier version
 tried to *detect* drift — diff the tip, compare digests, abort on surprise — and
@@ -171,9 +178,10 @@ a run whose landing was withheld is unfinished, and says which gate withheld it.
 
 Say where the branch stands relative to what landed, always, because they are
 rarely the same commit and only one of them was reviewed. Committed-but-not-landed
-is its own category and it is not dirt: name the landed sha, say how many commits
-the tip is ahead of it and what they are, and never let "the branch" stand in for
-"what was accepted".
+is its own category and it is not dirt: name the landed sha and its tag, say how
+many commits the tip is ahead of it and what they are, and never let "the branch"
+stand in for "what was accepted". In a withheld run there is no landed sha — say
+that, and which gate withheld it.
 
 Report what changed, the verification you ran, the reviewer round counts, the
 landed sha and its branch, the dirty state, what remains uncertain, and each release

@@ -136,6 +136,11 @@ AUTOMATIC_PHRASES = (
     # around them stays free to be rewritten.
     "Commit the frozen bytes first, then record that commit's sha",
     "What lands is that recorded sha",
+    # The landing is declared in git, not in prose: a turn killed after the
+    # acceptance keeps every byte and otherwise loses which commit was the
+    # accepted one. Same reason the checkpoints exist.
+    "declaring it in git rather than in prose",
+    "The tag survives; prose does not",
     "Re-review re-records",
     "Nothing lands that the reviewer did not accept",
     "blocks the landing and every release step after it",
