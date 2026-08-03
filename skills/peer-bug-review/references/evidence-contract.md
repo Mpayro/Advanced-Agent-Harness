@@ -130,7 +130,8 @@ normalization layer; never hand-edit a malformed verdict into compliance.
 
 Required labels per stage — plan: `VERDICT:`, `PLAN:`, `COUNTEREVIDENCE:`. Fix:
 `VERDICT:`, `DIFF:`, `TESTS:`, `COUNTEREVIDENCE:`. Integration: `VERDICT:`,
-`COVERAGE:`, `PRODUCT_CHECKS:`, `INTERACTIONS:`, `REMAINING_UNCERTAINTY:`. Every
+`COVERAGE:`, `PRODUCT_CHECKS:`, `INTERACTIONS:`, `REMAINING_UNCERTAINTY:`,
+`OMISSIONS:`. Every
 label carries non-empty content on its own physical line; a heading followed only
 by bullets is malformed evidence. State this in every reviewer prompt.
 

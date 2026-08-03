@@ -5,7 +5,12 @@
   "properties": {
     "stage": {
       "type": "string",
-      "enum": ["confirmation", "plan", "fix", "integration"]
+      "enum": [
+        "confirmation",
+        "plan",
+        "fix",
+        "integration"
+      ]
     },
     "reviews": {
       "type": "array",
@@ -15,8 +20,14 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "id": {"type": "string", "pattern": "^[A-Za-z0-9_.:-]+$"},
-          "target_artifact": {"type": "string", "minLength": 67},
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.:-]+$"
+          },
+          "target_artifact": {
+            "type": "string",
+            "minLength": 67
+          },
           "outcome": {
             "type": "string",
             "enum": [
@@ -28,19 +39,49 @@
               "REJECTED"
             ]
           },
-          "reproduction": {"type": "string"},
-          "authority": {"type": "string"},
-          "negative_control": {"type": "string"},
-          "root_cause": {"type": "string"},
-          "plan": {"type": "string"},
-          "diff": {"type": "string"},
-          "tests": {"type": "string"},
-          "coverage": {"type": "string"},
-          "product_checks": {"type": "string"},
-          "interactions": {"type": "string"},
-          "counterevidence": {"type": "string"},
-          "remaining_uncertainty": {"type": "string"},
-          "blocker": {"type": "string"}
+          "reproduction": {
+            "type": "string"
+          },
+          "authority": {
+            "type": "string"
+          },
+          "negative_control": {
+            "type": "string"
+          },
+          "root_cause": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string"
+          },
+          "diff": {
+            "type": "string"
+          },
+          "tests": {
+            "type": "string"
+          },
+          "coverage": {
+            "type": "string"
+          },
+          "product_checks": {
+            "type": "string"
+          },
+          "interactions": {
+            "type": "string"
+          },
+          "counterevidence": {
+            "type": "string"
+          },
+          "remaining_uncertainty": {
+            "type": "string"
+          },
+          "blocker": {
+            "type": "string"
+          },
+          "omissions": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "required": [
           "id",
@@ -63,5 +104,8 @@
       }
     }
   },
-  "required": ["stage", "reviews"]
+  "required": [
+    "stage",
+    "reviews"
+  ]
 }

@@ -29,6 +29,7 @@ STAGE_FIELDS = {
         ("PRODUCT_CHECKS", "product_checks"),
         ("INTERACTIONS", "interactions"),
         ("REMAINING_UNCERTAINTY", "remaining_uncertainty"),
+        ("OMISSIONS", "omissions"),
     ),
 }
 CONFIRMATION_OUTCOMES = {
@@ -128,6 +129,7 @@ def self_test() -> None:
         "interactions": "",
         "counterevidence": "none survived",
         "remaining_uncertainty": "",
+        "omissions": "",
         "blocker": "",
     }
     payload = {
