@@ -28,4 +28,4 @@ process exits, so an empty log proved nothing. Then three signals each reported
 - A high-reasoning review against a real repo runs for tens of minutes and
   prints nothing for long stretches. Do not kill it while its log grows.
 - The canonical call and model slugs live in one place: the `coding-peers`
-  Runner section ([[fable-architect-policy]]).
+  "Invoking Codex" section ([[fable-architect-policy]]).

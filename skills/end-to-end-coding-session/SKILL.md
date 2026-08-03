@@ -16,28 +16,44 @@ Everything below serves those four. `coding-peers` decides who every peer is,
 how to reach it, and what a verdict must look like; this skill never names a
 model.
 
-## Superpowers along the way
+## Process skills, and the one rule that outlived them
 
-These are process skills, and they belong inside the beats rather than after
-them. Invoke each where it applies, say so out loud, and follow it:
+Invoke a process skill where it genuinely applies and say which. Do not work
+through a checklist of them — a mandated list gets skipped and teaches that the
+rest of this skill is optional too.
 
-| Where | Skill |
-|---|---|
-| Before the plan exists, while the shape is still open | `superpowers:brainstorming` |
-| Writing the plan itself | `superpowers:writing-plans` |
-| Isolating the workspace | `superpowers:using-git-worktrees` |
-| Implementing, test first | `superpowers:test-driven-development` |
-| Working through the plan's tasks | `superpowers:executing-plans` |
-| Splitting independent slices across peers | `superpowers:subagent-driven-development` |
-| Anything unexpected, before proposing a fix | `superpowers:systematic-debugging` |
-| Before claiming any of it works | `superpowers:verification-before-completion` |
-| Asking for and reading the adversarial review | `superpowers:requesting-code-review`, `superpowers:receiving-code-review` |
-| Deciding how the branch lands | `superpowers:finishing-a-development-branch` |
+One rule does not survive as a habit and has to be written down: **show the
+failure before you change the behaviour.** A test that has never failed proves
+nothing about the fix. Where a failing check is impractical, say so and name what
+you used instead. Then run the mapped checks before claiming any of it works.
+
+That rule has a second half that gets skipped: a green suite you inherited is not
+evidence you broke nothing. It covers the seam you touched only if it would go red
+when that seam breaks, and you have not seen it do that. Before citing an existing
+green as regression proof, break the seam in a throwaway copy and confirm the test
+fails. If it stays green, you have found a second defect — report it.
 
 Apply `ponytail` throughout: the smallest change that actually works, at the root
 cause, after you understand the whole flow. Never be lazy about understanding the
 problem, input validation, error handling, security, accessibility, or anything
 the user explicitly asked for.
+
+## Peers in parallel
+
+This skill is standing authorization to fan out. Any beat may run a swarm — as
+wide as the stage genuinely divides — exploring an unfamiliar surface, probing
+separate seams, implementing disjoint slices, reviewing along orthogonal risks.
+Where the harness has a workflow orchestrator, use it: this skill's instructions
+are the opt-in it requires. Where it does not, dispatch subagents directly.
+
+Spawn the general tier from `coding-peers`, not the bulk-sweep one — Terra and
+Sol in Codex, Sonnet subagents in Claude — and always name the model explicitly.
+Gates run at the adversarial tier. Lanes must be genuinely independent: never
+send several agents the same broad question and call the agreement evidence.
+Collect the wave once rather than waking the coordinator per result.
+
+Fan out because the work divides, not to look thorough. One agent on one clear
+question beats six on a vague one.
 
 ## Before the first beat
 
@@ -47,24 +63,25 @@ will count as acceptance evidence, and any ambiguity that would change behaviour
 or authority. Ask about the ambiguity now — one short question beats a wrong
 plan.
 
-Settle three things in that same first exchange, because each one interrupts the
-run if you leave it for later:
+One thing must be settled in that same first exchange. **Which release steps, if
+any, the objective reaches** — named one by one and authorized here. Nothing
+later in the run can grant that authority.
 
-- Which adversarial peer, when `coding-peers` offers a choice in this harness.
-- Whether external peers are available, per its External Peers section.
-- Which release steps, if any, the objective reaches — named one by one and
-  authorized here. Nothing later in the run can grant that authority.
+Nothing else gets front-loaded. State the adversarial peer you will use rather
+than asking for it, and check external-peer availability only if a send actually
+comes.
 
 Then write the living plan at `docs/superpowers/plans/YYYY-MM-DD-<goal>.md`, or
-wherever the repo keeps plans. It is the only record of continuity: everything
-that must survive an interruption goes in it, and it is updated as the run
-proceeds, not at the end.
+wherever the repo keeps plans. **Do not trust memory: write the plan, decisions,
+evidence and open questions to markdown as the run proceeds, and treat those
+files rather than recollection as the record.** Keep them with the run's
+artifacts; trim the scratch, never the record.
 
 Read the repo before planning: instructions, the real code path and its callers,
 tests, `git status`, and the lineage of anything generated. For a broad or
-unfamiliar surface, send up to three read-only cheap-tier explorers down separate
-lanes — repo conventions, code path, tests and tooling. Never fake parallelism by
-asking several agents the same question.
+unfamiliar surface, send read-only explorers down separate lanes — repo
+conventions, code path, tests and tooling, and whatever else the surface
+genuinely divides into.
 
 ## Beat 1 — Plan, peered
 
@@ -91,16 +108,20 @@ Verify every claim yourself before acting on it. Revise for confirmed issues,
 record what you accepted and rejected in the living plan, and stop for the user
 when the same authority question comes back twice.
 
-Then show the user at most five plain bullets — outcome, the rule you are
-protecting, the proof, the scope boundary, the plan path — plus one naming each
-release step if there are any. Ask for implementation approval, and ask for
-release authorization separately.
+Then put the plan in front of the user for approval. Where the harness has a
+plan-approval mechanism of its own, use it rather than hand-rolling one. Where it
+does not, show at most five plain bullets — outcome, the rule you are protecting,
+the proof, the scope boundary, the plan path.
+
+Either way, name each release step separately and ask for release authorization
+separately. Approving a plan is edit authority and nothing more.
 
 ## Beat 3 — Implementation, peered
 
 Work on an isolated `agent/<goal>` branch or linked worktree unless the user or
-repo requires in-place work. A dirty shared checkout is not isolation; preserve
-unrelated dirt and never stage it.
+repo requires in-place work. Use the harness's own worktree tooling where it has
+some. A dirty shared checkout is not isolation; preserve unrelated dirt and never
+stage it.
 
 Make the smallest change at the root cause. Grep every caller before patching one
 path. Delegate slices to peers only when file ownership is disjoint, and give each
@@ -110,28 +131,47 @@ Prove it as you go: the narrow check for the change, then the sibling and
 lifecycle checks, then whatever the repo's conventions require. Non-trivial logic
 leaves one runnable check behind.
 
+Commit as you go too, and for the same reason you branch: a turn can be killed
+without warning and cannot write its own handoff, so no slice is left only in the
+tree once it lands, and no wave dispatches while the previous wave's output is still
+uncommitted. Disjoint slices still run in parallel — this binds when work is
+written down, not when the next may start. The branch is isolated precisely so that
+"it is not clean yet" costs nothing. Where the repo requires in-place work there is
+no isolated branch to commit to — persist to a written patch file instead, at the
+same cadence, and say so at the handoff. Never commit to the user's branch to
+satisfy this. The write-up waits until the end; the work never does.
+
 Update the living plan as you go — decisions, surprises, and anything that turned
 out different from the plan.
 
 ## Beat 4 — Adversarial review of the result
 
-Freeze the exact patch bytes with their SHA-256 and hand a fresh peer the real
-diff, the verification output, and the approved plan. Ask for correctness, missed
+Freeze the exact patch bytes and hand a fresh peer the real diff, the
+verification output, and the approved plan. Ask for correctness, missed
 requirements, security and data risk, over-engineering, and missing proof. Send
 the same frozen target to the external peers when available — this is the second
 and last external consultation.
 
-Every finding is a hypothesis. Reproduce it, fix only confirmed defects that are
-in scope, re-run the mapped checks, and re-review once. Adjacent problems get
-documented, not silently absorbed.
+Ask this reviewer for one more thing, in the `OMISSIONS` line of its verdict:
+what the work and the write-up leave out, soften, or overclaim — one field on the
+review already running, not a second pass. Anything it raises that you verify
+goes into the handoff.
 
-Offer the heavy `peer-bug-review` exactly once before handing off, and respect
-the answer. If it changes code, repeat beats 3 and 4 without re-offering.
+Every finding is a hypothesis. Reproduce it, fix only confirmed defects that are
+in scope, re-run the mapped checks, and re-review. Keep going while each round
+confirms a new in-scope defect; stop when a round finds none. Adjacent problems
+get documented, not silently absorbed.
+
+Offer the heavy `peer-bug-review` before handing off and respect the answer. If
+it changes code, repeat beats 3 and 4 without re-offering.
 
 ## Last check — the product, in a browser
 
-This runs last, after the review and before anything is handed off, committed, or
-released. A product with a UI is not verified until someone drove it.
+**The cycle does not end until you have driven what you built and clicked
+through it.** A product with a UI is not verified until someone drove it — not a
+screenshot, not a green unit suite, the real thing in a browser exercising what
+this change created. This runs last, after the review and before anything is
+handed off, committed, or released.
 
 - Launch Chrome with a throwaway profile and remote debugging. Never the user's
   own profile, never their logged-in session.
@@ -152,7 +192,7 @@ Three outcomes, and one of them must be stated out loud:
   is then unverified on that surface, and it is reported that way.
 
 A change with no reachable UI records "no UI surface" and moves on. That is a
-stated outcome, not a silent skip. A green unit suite never substitutes for this.
+stated outcome, not a silent skip.
 
 ## Authority
 
@@ -161,6 +201,11 @@ Three authorities, granted separately, never inferred from each other:
 - **Edit** comes from the user approving the plan.
 - **Commit** comes from asking at the handoff.
 - **Release** comes only from the naming in the first exchange.
+
+Checkpointing your own work on your own isolated branch is not the commit this
+governs, and never needs asking — it lands nothing, it only stops a killed turn
+from taking the work with it. What needs asking is the commit that delivers:
+anything onto a branch the user shares, and the commit steps the handoff proposes.
 
 Approval of the code is not approval of the release. A plan that never mentioned
 production does not acquire it later, and no peer can grant it.
@@ -189,7 +234,9 @@ reached, or — only when the user never authorized it — proposed. A run that
 reached production says so plainly and never calls a finished release proposed.
 
 Do not commit, push, merge, deploy, promote, or migrate unless the user
-explicitly asks.
+explicitly asks. Checkpoints on the isolated branch are the one exception, stated
+in Authority above: they deliver nothing, and they are why there is still work to
+hand off after a turn dies.
 
 ## What is not done
 
@@ -213,16 +260,6 @@ Lead with the largest gap. If a category is genuinely empty, say so — "no
 unhandled cases" is information; silence is not. Never end a handoff whose only
 shape is what went well.
 
-## The summary gets reviewed too
-
-Draft the handoff, then hand the draft plus the real change and its evidence to
-one fresh peer before the user sees it. You wrote the work, so you are the worst
-judge of what the write-up quietly leaves out.
-
-Ask it for exactly that: what the summary omits, softens, or overclaims — above
-all in what is not done. Anything it adds that you verify goes into the summary.
-This is one cheap pass, not another review round; the code was already reviewed.
-
 ## Then say it simply
 
 What lands in chat is short and plain. A few lines, ordinary words, no tables, no
@@ -239,15 +276,20 @@ next message, not your current one.
 
 ## Limits
 
-| Stage | Limit | Stop when |
-|---|---:|---|
-| Plan review | 2 revisions | The same authority blocker repeats |
-| Failing check | 3 attempts | The root cause is still unclear |
-| Result review | 2 rounds | No new confirmed in-scope defect |
-| External peer | 1 retry | Repeated empty or failed response |
-| Heavy bug review | 1 offer, 1 run | Declined, finished, or blocked |
-| Authorized release | 1 pass, no retry | First failure, rollback state stated |
+Iterate while each round produces something new. These are the stop conditions,
+not attempt counts — a run that is still converging keeps going.
+
+| Stage | Stop when |
+|---|---|
+| Plan review | The same authority blocker repeats |
+| Failing check | Two consecutive attempts produce no new evidence about the cause |
+| Result review | A round confirms no new in-scope defect |
+| External peer | One retry fails — fall back to the local reviewer |
+| Authorized release | First failure — no retry, rollback state stated |
 
 Repeat only the stage that failed. Never restart the whole run because one stage
-did. When a stage exhausts its limit, say what is blocked and hand the decision
+did. When a stop condition triggers, say what is blocked and hand the decision
 back to the user.
+
+The release row is the one hard bound: an irreversible action gets one pass. The
+rest are judgment, and judgment favours finishing the feature.

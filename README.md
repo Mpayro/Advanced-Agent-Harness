@@ -29,25 +29,37 @@ end-to-end coding session: add rate limiting to the public API
 
 The human-gated workflow:
 
-1. Routes the request and checks for an existing continuation handle.
-2. Reads the real repo path, callers, tests, instructions, branch, and dirty
-   state before planning.
-3. Restates the objective, recommends persistent continuation for long/complex
-   work or a single run for simple/bounded work, and asks you to choose. The
-   handle is a goal where the harness has goal tools and a loop (`/loop`) where
-   it does not.
-4. Writes a living plan, has a fresh Codex reviewer attack it, and asks you to
-   approve implementation.
-5. Implements the approved plan in an isolated worktree with failure-first
-   evidence.
-6. Verifies the acceptance claims, including an isolated-Chrome product smoke
+1. Reads the real repo path, callers, tests, instructions, branch, and dirty
+   state before planning, fanning explorers out across independent lanes.
+2. Restates the objective and asks for exactly one thing up front: which release
+   steps, if any, the work reaches. Nothing later in the run can grant that
+   authority. Everything else has a default and is stated, not asked.
+3. Writes a living plan, has a fresh reviewer attack it, and asks you to approve
+   implementation.
+4. Implements the approved plan in an isolated worktree, showing the failure
+   before changing the behaviour, and checkpointing each slice as it lands so a
+   turn that dies without warning cannot take the work with it.
+5. Verifies the acceptance claims, including an isolated-Chrome product smoke
    for UI work.
-7. Freezes and reviews the exact task-owned patch, not a prose summary.
-8. Asks once whether to run the heavier Peer Bug Review, then stops before
+6. Freezes and reviews the exact task-owned patch, not a prose summary. That
+   same reviewer reports what the write-up omits or overclaims.
+7. Asks once whether to run the heavier Peer Bug Review, then stops before
    commit.
 
-The workflow preserves unrelated changes and never commits, pushes, or merges
-without explicit authority.
+Any beat may fan out a swarm of roughly five to ten agents when the stage
+genuinely divides that many ways, using the harness's workflow orchestrator
+where it has one.
+
+The workflow preserves unrelated changes and never delivers, pushes, or merges
+without explicit authority. Checkpoints on its own isolated branch are the one
+exception, and they are not a delivery: they hand nothing over, they only make
+sure there is still something to hand over. Where a repo forbids branching, there
+are no checkpoints either — the work is written to a patch file instead, and never
+committed to a branch you share.
+
+Every rule above is there because a run broke without it. The checkpoint rule
+comes from a turn that ran nearly nineteen hours and was killed by a content
+filter with no final message; what survived was committed, and nothing else was.
 
 ## Automatic variant
 
@@ -57,12 +69,19 @@ Run:
 end-to-end coding session automatic: migrate the auth middleware
 ```
 
-Automatic is explicit opt-in. Its first alignment response also recommends and
-asks you to choose persistent continuation or a single run. It then checks that the task is
-deterministic, reversible, isolated, and fully provable. Fresh reviewers get up
-to ten plan gates and three code gates. You still choose once whether to run
-Peer Bug Review. After acceptance it commits only the approved patch to the
-isolated branch; it never pushes or merges.
+Automatic is explicit opt-in, and its opening consent is where any release step
+must be named. It then checks that the task is deterministic, reversible,
+isolated, and fully provable, and hands the work back to the human-gated skill
+when it is not. A fresh reviewer approves the plan and the diff in your place.
+You still choose once whether to run Peer Bug Review.
+
+Work is checkpointed to the isolated branch as it goes, so a killed turn cannot
+take it with it. That makes the branch and the delivery two different things, and
+the workflow keeps them apart: it commits the frozen bytes, records that commit's
+sha, and lands exactly that sha once the reviewer accepts it. Anything committed
+afterwards stays on the branch and is reported as such — never as delivered work.
+A UI change whose browser check failed or was unavailable blocks the landing and
+every release step after it. It never pushes or merges.
 
 ## Peer Bug Review
 
@@ -83,6 +102,22 @@ discovers candidates in disjoint lanes, blindly verifies each candidate,
 classifies it, and closes with a whole-product integration gate. Repair mode
 advances only confirmed bugs through reviewed plans, failure-first fixes, and
 fresh adversarial re-review.
+
+Before judging any code it proves the gates can fail — that a baseline is
+populated, that a test glob matches something, that a declared assertion is read
+by anything. A gate that cannot fail turns every green behind it into noise, and
+no amount of probing the product will find it.
+
+It also hunts tests that pass without meaning anything, by name: a **dead anchor**
+compares output against a frozen artifact, so green means nothing changed since the
+freeze; an **uncompared twin** is the same fact resolved two ways with nothing
+asserting they agree; **borrowed authority** is a test that names a source in its
+title and never opens it. None of the three survives a red-first test, and none
+shows up in a code review, because every side looks correct on its own.
+
+A state ledger holds the run by default, not only on big ones. It is what lets a
+run survive losing its context, and its absence is what turns a long run into the
+same plan written twice on two branches.
 
 Its promise is evidence coverage, not the impossible claim that a repository
 has no bugs.

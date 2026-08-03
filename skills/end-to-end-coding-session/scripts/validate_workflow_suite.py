@@ -67,29 +67,29 @@ def remove_contract_phrase(text: str, phrase: str) -> str:
     return re.sub(pattern, "", text, count=1)
 
 
+# These lists assert BEHAVIOUR that would be a defect to lose, not wording.
+# A phrase earns its place only if deleting it changes what an agent does. The
+# suite deliberately does not freeze prose: a rewrite should be free to say the
+# same thing better, and a list long enough to forbid that just blesses the next
+# rewrite once someone updates it.
+
 BASE_PHRASES = (
     # The shape itself.
     "Four beats, in order",
-    "Plan, peered",
-    "Adversarial review of the plan",
-    "Implementation, peered",
-    "Adversarial review of the result",
     "this skill never names a model",
-    # Nothing is decided mid-run that could have been decided up front.
-    "Settle three things in that same first exchange",
+    # Release authority is granted before the run, or never.
     "Which release steps, if any, the objective reaches",
     "Nothing later in the run can grant that authority",
-    "It is the only record of continuity",
     # Findings are hypotheses; proof is real or absent, never substituted.
     "Verify every claim yourself before acting on it",
     "Every finding is a hypothesis",
+    "failure before you change the behaviour",
     # The three authorities never collapse into one.
     "Three authorities, granted separately, never inferred from each other",
     "Approval of the code is not approval of the release",
     "A plan that never mentioned production does not acquire it later",
-    "Touching production is scope, not a forbidden category",
     "it is reversible, or its irreversibility was disclosed before it was authorized",
-    # Isolation, handoff, and honest reporting.
+    # Isolation.
     "A dirty shared checkout is not isolation",
     # The browser check vanished once in a rewrite; it is asserted now.
     "Last check \u2014 the product, in a browser",
@@ -98,23 +98,16 @@ BASE_PHRASES = (
     "That is a stated outcome, not a silent skip",
     # The handoff must correct a false impression of completeness.
     "The user reads a finished report as a finished feature",
-    "Asked for and not built",
-    "Looks done and is not",
     "Never end a handoff whose only shape is what went well",
-    # The summary is reviewed before the user sees it, then kept short.
-    "The summary gets reviewed too",
-    "you are the worst judge of what the write-up quietly leaves out",
-    "What lands in chat is short and plain",
-    "that is their next message, not your current one",
-    # Process skills belong inside the beats.
-    "Superpowers along the way",
-    "superpowers:brainstorming",
-    "superpowers:test-driven-development",
-    "superpowers:systematic-debugging",
-    "superpowers:verification-before-completion",
-    "Apply `ponytail` throughout",
+    # Work not persisted is work a killed turn takes with it. The automatic
+    # variant's landing gate is built on this rule by name — it verifies a
+    # recorded sha precisely because the work is already committed in
+    # checkpoints. Delete the rule here and keep that gate, and the gate asserts
+    # nothing; nothing else in the suite noticed that hole.
+    "no slice is left only in the tree once it lands",
+    "Never commit to the user's branch to satisfy this",
+    # Commit and release are asked for, never assumed.
     "Ask before commit",
-    "never calls a finished release proposed",
     "Do not commit, push, merge, deploy, promote, or migrate unless the user",
     "Repeat only the stage that failed",
 )
@@ -127,7 +120,6 @@ AUTOMATIC_PHRASES = (
     "Consent, once, up front",
     "run automatically only if named right here",
     "A generic \"implement it\" is not this consent",
-    "an autonomous run that stops at its own review gate to ask who reviews is not autonomous",
     # The mode refuses itself when it should.
     "When to refuse the mode",
     "a reviewer would have to invent intent to approve",
@@ -137,23 +129,26 @@ AUTOMATIC_PHRASES = (
     "the plan does not carry that action's rollback and verification",
     "a production, destructive, or irreversible step the consent never named",
     "an autonomous run may not take that authority from its own plan",
-    # The commit is the accepted bytes and nothing else.
-    "using the accepted patch as the sole staging input",
-    "abort on any other staged bytes",
+    # The landed sha contains the accepted bytes, by construction.
+    # The gate reads a recorded sha, because checkpoint commits mean the staging
+    # area is empty by the time the reviewer accepts and the tip keeps moving.
+    # Only the invariant and the recorded-sha rule are frozen; the mechanism
+    # around them stays free to be rewritten.
+    "Commit the frozen bytes first, then record that commit's sha",
+    "What lands is that recorded sha",
+    "Re-review re-records",
+    "Nothing lands that the reviewer did not accept",
+    "blocks the landing and every release step after it",
     "any mismatch goes back to the user",
     # Release authority is separate and consumable exactly once.
     "Commit authority is not release authority; never infer one from the other",
     "One pass, no retry",
     "Never push or merge as a side effect of committing",
     "never as a completed step",
+    # Automatic-only: unwatched runs may not commit unverified UI.
     "The base skill's last check is not optional here",
-    "an autonomous run may not commit a UI change that nobody drove",
-    "The base skill's Superpowers table applies here unchanged",
+    "an autonomous run may not ship a UI change that nobody drove",
     "Nobody is watching this run, which is the reason to follow them",
-    "The user reads a finished report as a finished feature",
-    "Never end a handoff whose only shape is what went well",
-    "The summary gets reviewed too",
-    "What lands in chat is short and plain",
 )
 
 PEER_PHRASES = (
@@ -161,11 +156,14 @@ PEER_PHRASES = (
     "The harness you are running in picks the column, never the task",
     "Slugs name a tier, not a version",
     "This table is the only place any skill names a model",
-    "ask once at the start of the run which adversarial peer to use",
+    # The default is taken, not asked for; a standing instruction still wins.
+    "A standing instruction outranks this table",
     # The artifact under review is the real one, provably.
     "Freeze the target before dispatch",
     "A summary explains intent and cannot replace the thing under review",
     "A malformed response is not a verdict",
+    # The unavailable-and-carry-on escape is forbidden inside a ledger gate.
+    "there is no unavailable outcome",
     "counterevidence against itself",
     # Findings and proof.
     "Nothing, until you reproduce it",
@@ -177,7 +175,8 @@ PEER_PHRASES = (
     "This skill dispatches none of them with write access",
     "A key on disk is a capability, never a standing consent",
     "it is a data boundary, not a formality",
-    # The runner and its liveness rules.
+    # The runner and its liveness rules. This is the operational knowledge the
+    # whole suite cannot re-derive; it cost a 14-minute false hang to learn.
     "Never pipe the output",
     "Prompt over stdin",
     "do not kill it while its output file grows",
@@ -208,26 +207,48 @@ PEER_BUG_PHRASES = (
     "reproduce the failure on the baseline",
     "Verify every reviewer claim yourself before touching code",
     "serialize anything sharing files, state, schema, or an invariant",
-    "The script does not enforce that list \u2014 you do",
+    "The script does not enforce the excluded list \u2014 you do",
     "The post-fix review is never skipped",
+    # One state authority per run, named out loud, and the ledger is the default
+    # where the harness has no orchestrator of its own.
+    "Pick one state authority per run and say which",
+    "the exception is a run holding a single candidate",
+    # Work that is not persisted is work a killed turn takes with it.
+    "Nothing is left only in the tree",
+    # Every mode needs a place to persist. In-place repair has no branch, and
+    # the run that discovers that mid-flight is the one that commits to the
+    # user's branch to satisfy the rule above.
+    "Where a repair runs in place because the repo requires it",
+    "Not summarised, committed",
+    # Bound persistence, never start order — the earlier wording serialized the
+    # parallel lanes beats 1 and 2 depend on.
+    "lanes still run in parallel",
+    # A compressed list in SKILL.md must name the reference it compresses, at
+    # the point of use. Every one of these three once stated a full-looking
+    # checklist with no local pointer, and each dropped a step that changed what
+    # an agent did: the preflight lost persisted-state inspection, the inventory
+    # lost auth/secrets/money/destructive operations, the waiver lost its
+    # recorded artifact and its high-risk exclusion.
+    "Run the preflight in `references/detection-and-evaluation.md`",
+    "enumerate the surface against the inventory in `references/repo-overview.md`",
+    "the full waiver in `references/evidence-contract.md`",
     # Closing honestly.
     "Per-bug green is not product green",
-    "The user reads a finished report as a finished audit",
     "Surfaces nobody looked at",
     "is a lie told by omission",
-    "The summary gets reviewed too",
-    "What lands in chat is short and plain",
-    "Never end a handoff whose only shape is what went well",
     "it stops the run from claiming coverage",
     "Repeat only the stage that failed",
 )
 
+# The reviewer is not asked to echo the frozen digest back: the renderer stamps
+# it from the frozen target, and every observed instance of the echo failing was
+# a model forgetting to copy a hash, never a peer reading the wrong artifact.
 PEER_RESPONSE_LABELS = (
-    "TARGET_ARTIFACT:",
     "VERDICT:",
     "FINDINGS:",
     "TESTS:",
     "COUNTEREVIDENCE:",
+    "OMISSIONS:",
 )
 
 METADATA_FIELDS = ("display_name", "short_description", "default_prompt")
@@ -288,6 +309,117 @@ def mutation_control(
         errors.append(f"validator: mutation control failed for {label} {phrase!r}")
 
 
+def unreachable(skill_text: str, bodies: dict[str, str]) -> list[str]:
+    """Names in `bodies` that `skill_text` cannot reach in one hop.
+
+    Reachable means: named in SKILL.md, or named in a file SKILL.md names. Pure,
+    so the self-control below can prove it bites without touching the disk.
+    """
+    def names(filename: str, text: str) -> bool:
+        # Plain substring matching would make `contract.md` reachable through
+        # `evidence-contract.md` — exactly the orphan this exists to catch. The
+        # boundary excludes word characters, dots and dashes but *not* `/`,
+        # because every real mention is written as `references/<name>`.
+        # Bounded on both sides: the left boundary keeps `contract.md` from
+        # matching inside `evidence-contract.md`, the right keeps `plan.md` from
+        # matching inside `plan.md.bak`. Neither excludes `/`, because every real
+        # mention is written `references/<name>`.
+        return (
+            re.search(rf"(?<![\w.-]){re.escape(filename)}(?![\w.-])", text)
+            is not None
+        )
+
+    reachable = skill_text
+    pending = dict(bodies)
+    # To a fixed point: a pointer chain can run in any order, and a single pass
+    # follows only the ones that happen to come out in the right one.
+    while True:
+        found = [name for name in pending if names(name, reachable)]
+        if not found:
+            break
+        for filename in found:
+            reachable += pending.pop(filename)
+    return sorted(pending)
+
+
+def orphan_reference_errors() -> list[str]:
+    """Every reference and asset must be reachable from its SKILL.md.
+
+    A file nobody points at is a file nobody reads, and adding one is the easiest
+    way to move a rule out of an agent's path without noticing. Reachability is
+    one hop: named in SKILL.md, or named in something SKILL.md names. That is
+    deliberately structural — it asserts the pointer exists, never what the prose
+    around it says, so a rewrite stays free.
+    """
+    errors: list[str] = []
+    for name in NAMES:
+        skill_path = SKILLS_ROOT / name / "SKILL.md"
+        if not skill_path.is_file():
+            continue
+        for directory in ("references", "assets"):
+            source_dir = SKILLS_ROOT / name / directory
+            if not source_dir.is_dir():
+                continue
+            bodies: dict[str, str] = {}
+            for candidate in sorted(source_dir.iterdir()):
+                if not candidate.is_file():
+                    continue
+                try:
+                    bodies[candidate.name] = candidate.read_text(encoding="utf-8")
+                except UnicodeDecodeError:
+                    bodies[candidate.name] = ""
+            errors.extend(
+                f"{name}: {directory}/{orphan} is named nowhere an agent reads"
+                for orphan in unreachable(
+                    skill_path.read_text(encoding="utf-8"), bodies
+                )
+            )
+    return errors
+
+
+def installed_mirror_errors() -> list[str]:
+    """Check the installed Codex mirror, when one exists on this machine.
+
+    These four skills are cross-harness: they carry a per-harness peer table, so
+    the mirror hook copies them verbatim instead of renaming Claude -> Codex.
+    That rename is what silently produced "| Role | In Codex | In Codex |" and
+    "In Codex or Codex" in the shipped Codex copies, leaving them unable to pick
+    a column. The corruption survived because nothing compared the two trees.
+
+    Deliberately opt-in: absent ~/.codex this returns nothing, so packaging the
+    skills on a machine without Codex is not a failure. Every text file is
+    compared, not just SKILL.md — the worst corruption lived in a reference file.
+    """
+    mirror_root = HOME / ".codex" / "skills"
+    if not mirror_root.is_dir():
+        return []
+    errors: list[str] = []
+    hazards = ("In Codex | In Codex", "Codex or Codex", "Opus in Codex")
+    for name in NAMES:
+        source_dir = SKILLS_ROOT / name
+        mirror_dir = mirror_root / name
+        if not mirror_dir.is_dir():
+            errors.append(f"{name}: not mirrored to ~/.codex/skills")
+            continue
+        for source in sorted(source_dir.rglob("*")):
+            if not source.is_file() or source.suffix.lower() != ".md":
+                continue
+            relative = source.relative_to(source_dir)
+            copy = mirror_dir / relative
+            if not copy.is_file():
+                errors.append(f"{name}: mirror missing {relative}")
+                continue
+            mirrored = copy.read_text(encoding="utf-8")
+            if mirrored != source.read_text(encoding="utf-8"):
+                errors.append(f"{name}: mirror of {relative} differs from source")
+            for hazard in hazards:
+                if hazard in mirrored:
+                    errors.append(
+                        f"{name}: mirror of {relative} was renamed — {hazard!r}"
+                    )
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
     texts: dict[str, str] = {}
@@ -330,11 +462,12 @@ def main() -> int:
             ):
                 if re.search(pattern, text, flags=re.IGNORECASE):
                     errors.append(f"{name}: pinned model version {pattern}")
-        mirror = HOME / ".claude" / "skills" / name / "SKILL.md"
-        if not mirror.is_file():
-            errors.append(f"{name}: missing required mirror")
-        elif mirror.read_text(encoding="utf-8") != text:
-            errors.append(f"{name}: mirror is stale")
+        canonical = HOME / ".claude" / "skills" / name / "SKILL.md"
+        if canonical.resolve() != skill_path.resolve():
+            if not canonical.is_file():
+                errors.append(f"{name}: missing canonical copy under ~/.claude")
+            elif canonical.read_text(encoding="utf-8") != text:
+                errors.append(f"{name}: drifted from the canonical ~/.claude copy")
 
     base = texts.get("end-to-end-coding-session", "")
     automatic = texts.get("end-to-end-coding-session-automatic", "")
@@ -349,7 +482,7 @@ def main() -> int:
         errors.append("base: release runs before it is authorized")
     if ordered_wrong(
         base,
-        "Ask for implementation approval",
+        "put the plan in front of the user for approval",
         "Make the smallest change at the root cause",
     ):
         errors.append("base: implementation precedes its approval")
@@ -363,13 +496,6 @@ def main() -> int:
         "Ask before commit",
     ):
         errors.append("base: the browser check is not the last verification")
-    if ordered_wrong(
-        base,
-        "The summary gets reviewed too",
-        "What lands in chat is short and plain",
-    ):
-        errors.append("base: the summary is delivered before it is reviewed")
-
     errors.extend(contract_errors(automatic, AUTOMATIC_PHRASES, "automatic"))
     if ordered_wrong(
         automatic,
@@ -379,10 +505,10 @@ def main() -> int:
         errors.append("automatic: the plan gate precedes consent")
     if ordered_wrong(
         automatic,
-        "Commit only after that acceptance",
-        "Run only after the commit exists",
+        "land only after that acceptance",
+        "Run only after the landing happened",
     ):
-        errors.append("automatic: release precedes the commit")
+        errors.append("automatic: release precedes the landing")
     if inherits_base_step_one(automatic):
         errors.append("automatic: inherits contradictory base Step-1 disclosure")
 
@@ -485,6 +611,31 @@ def main() -> int:
     ):
         if not metadata_contract_errors(sample, "sample"):
             errors.append("validator: invalid metadata self-control failed")
+
+    # Reachability self-control. Direct naming passes, the second hop passes, an
+    # orphan is caught, and a file that names only itself does not bootstrap
+    # itself into being reachable.
+    if (
+        unreachable("read alpha.md", {"alpha.md": ""})
+        # Second hop, and the same chain running backwards alphabetically — the
+        # ordering a single pass follows only by luck.
+        or unreachable("read alpha.md", {"alpha.md": "then beta.md", "beta.md": ""})
+        or unreachable("read zulu.md", {"alpha.md": "", "zulu.md": "then alpha.md"})
+        or "orphan.md" not in unreachable("read alpha.md", {"alpha.md": "", "orphan.md": ""})
+        # A name must not be reachable as the tail of a longer one.
+        or "contract.md" not in unreachable(
+            "read evidence-contract.md", {"evidence-contract.md": "", "contract.md": ""}
+        )
+        # Nothing bootstraps itself into being reachable.
+        # Nor as the prefix of a longer one.
+        or "plan.md" not in unreachable("read plan.md.bak", {"plan.md.bak": "", "plan.md": ""})
+        # Nothing bootstraps itself into being reachable.
+        or "self.md" not in unreachable("read nothing", {"self.md": "self.md"})
+    ):
+        errors.append("validator: reachability self-control failed")
+
+    errors.extend(orphan_reference_errors())
+    errors.extend(installed_mirror_errors())
 
     if errors:
         for error in errors:

@@ -14,7 +14,66 @@ The same four beats as `end-to-end-coding-session`, pointed at bugs:
 
 `coding-peers` decides who every peer is and what a verdict must look like. Apply
 `ponytail` throughout. In repair mode, `end-to-end-coding-session` owns the
-branch, the plan approval, and the stop before commit.
+branch, the plan approval, and the stop before commit — including its standing
+authorization to fan out as wide as a stage divides, which this skill's beats 1
+and 2 lean on harder than any other.
+
+## Which machinery holds the run
+
+Pick one state authority per run and say which. Two are never live at once.
+
+**In Codex**, `scripts/review_state.py` is that authority. There is no
+orchestrator that survives a lost context, so the ledger is the only thing that
+can prove what was covered, what was classified, and what is still open. Use it
+for every run, including small ones.
+
+**Elsewhere**, use a workflow orchestrator for the dispatches where the harness has
+one — it enforces a verdict schema at the tool layer and replays a run, so a
+malformed verdict is retried by the runtime instead of costing a dispatch. It does
+not replace the ledger and is not a state authority. The state stays in
+`review_state.py`, because the guarantees the beats below lean on live there and
+nothing else implements them: one frozen target per gate, digests bound to stage and
+finding, evidence and reviewer identity that cannot be reused, a waiver that is not
+a waiver until it is recorded. So the ledger holds the run by default, and the
+exception is a run holding a single candidate. Say out loud which shape you are in,
+because the runs that skip the ledger are the ones that end with the same plan
+written twice on two branches and a worktree of unmerged work nobody can account
+for.
+
+Whichever holds the run, one coordinator writes it. Subagents return evidence
+and never mutate state.
+
+## Commit as you go, everywhere
+
+A turn can die without warning — an external filter, a lost connection, a
+compaction that eats the thread. When it does, everything not already on disk is
+gone, and a killed turn cannot write its own handoff. So do not bound the length of
+a turn, which you cannot control. Bound **the work that is not yet persisted**,
+which you can.
+
+Nothing is left only in the tree. Each unit — a lane, a slice, a finding, a block —
+is persisted once it lands, and no wave dispatches while the previous wave's output
+is still unpersisted. That binds when work is written down, never when the next
+unit may start: lanes still run in parallel, which beats 1 and 2 depend on harder
+than anything else here.
+
+In repair mode persisted means committed, on the isolated branch that mode already
+owns. Not summarised, committed; "it is not clean yet" is not a reason to hold work
+back, it is the reason the branch is isolated. In audit mode there is no branch and
+nothing to commit — there the ledger is the persistence, and a finding that lives
+only in the coordinator's context is the same defect wearing a different coat.
+Where a repair runs in place because the repo requires it, there is no isolated
+branch either: persist to the ledger and to written patch files. Never commit to
+the user's branch to satisfy this — the base skill forbids it outright and owns the
+branch in repair mode, so asking does not unlock it either. What waits until the end is the write-up,
+never the work.
+
+This is the cheapest discipline in the file and the one with the most evidence
+behind it. A run that committed roughly every twenty minutes lost nothing when a
+turn of almost nineteen hours was killed with no final message; a run in the same
+repo the same week that kept its work in the tree instead produced duplicate
+branches and a worktree of staged work still unmerged days later. The ledger proves
+what was classified. The commit is what keeps the work.
 
 ## What you may promise
 
@@ -34,21 +93,27 @@ read-only apart from the review artifacts the user asked for.
 is not edit authorization.
 
 Read `references/evidence-contract.md` and `references/detection-and-evaluation.md`
-before starting, `references/repo-overview.md` when the scope is a whole repo or
-module, and `references/runtime-adapters.md` before spawning anything.
+before starting, `references/repo-overview.md` before building any inventory, and
+`references/runtime-adapters.md` before spawning anything.
 
 ## Beat 1 — Find, peered
 
-First prove you can observe the thing: real entrypoints, safe fixtures, logs and
-state, required services. Record what is not observable as blocked, with the
+First prove you can observe the thing — entrypoints, fixtures and test commands,
+logs and persisted state and downstream side effects, services that start without
+touching production data, and gates that can actually fail. Run the preflight in
+`references/detection-and-evaluation.md`; that list is the checklist and this
+sentence is only its shape. Record what is not observable as blocked, with the
 reason, before anything else.
 
-Then enumerate the surface — modules and entrypoints, public functions and risky
-private seams, jobs and migrations and external I/O, business state machines,
-UI routes and their empty, error, and permission states, and the test and
-deployment surfaces. Give each item a stable id and a risk, and freeze that
-inventory. Candidates found later reference an existing id; they never quietly
-add one.
+Then enumerate the surface against the inventory in `references/repo-overview.md` —
+open it whenever you are building an inventory, not only when the scope is named as
+a whole repo. That file holds the categories; this sentence names only the six a
+summary drops first and the attack map orders first, so that their absence is
+visible from here: **auth and permissions, secrets, money, destructive operations,
+audit history, and calculations of date, unit and rounding**. An inventory built
+from this paragraph instead of from that file is missing most of itself. Give each
+item a stable id and a risk, and freeze that inventory. Candidates found later
+reference an existing id; they never quietly add one.
 
 Send explorers down disjoint lanes with orthogonal methods, not several agents
 repeating the same static read. Each returns what it covered, the commands it
@@ -67,7 +132,9 @@ second opinion.
 
 Each candidate ends as exactly one of: confirmed, not a bug, needs a user
 decision, or duplicate. Only confirmed advances. Tests and old docs are evidence
-of intent, not proof of correctness.
+of intent, not proof of correctness — a candidate is never killed by a green test
+the verifier has not seen go red. See vacuous green in
+`references/detection-and-evaluation.md`.
 
 Freeze each target before dispatch, keep one evidence artifact and one reviewer
 identity per target, and let `scripts/review_state.py` hold the counters and gate
@@ -89,8 +156,15 @@ anything sharing files, state, schema, or an invariant.
 
 A low or medium-risk bug with a deterministic failing test may skip the separate
 plan reviewer, but never one touching security, money, authorization,
-concurrency, migrations, destructive behaviour, or a cross-module contract. The
-script does not enforce that list — you do. The post-fix review is never skipped.
+concurrency, migrations, destructive behaviour, or a cross-module contract, and
+never a high or critical finding or an exhaustive run whatever it touches. Those are
+not the whole condition and the risk they turn on is not the bug's: the full waiver
+in `references/evidence-contract.md` adds further conditions and reads the risk off
+the frozen inventory item — go read them there, all of them. And a waiver is not
+taken by deciding it applies: it is recorded, in the artifact that file specifies,
+and then `review_state.py waive-plan` is called. Skipping the reviewer without that
+record is not a waiver, it is a gap. The script does not enforce the excluded list
+— you do. The post-fix review is never skipped.
 
 ## Beat 4 — Review the assembled product
 
@@ -116,7 +190,7 @@ claiming coverage. Report it as blocked, name what would unblock it, and close.
 
 ## Limits
 
-The script enforces these; the numbers below are the real ones.
+Where the ledger holds the run it enforces these and wins any disagreement.
 
 | Stage | Fast (default) | Exhaustive |
 |---|---:|---:|
@@ -135,47 +209,18 @@ stage did.
 
 ## What is not done
 
-The user reads a finished report as a finished audit. Correcting that is your
-job, not theirs, and it is the part of the handoff that gets skipped.
+The base skill's "What is not done" and "Then say it simply" apply unchanged,
+with its four categories read against an audit rather than a feature:
 
-Say plainly, without softening:
-
-- **Surfaces nobody looked at.** Every inventory item blocked or skipped, what it
-  would have taken to observe it, and what that does to the coverage claim.
+- **Surfaces nobody looked at** replaces "asked for and not built". Every
+  inventory item blocked or skipped, what it would have taken to observe it, and
+  what that does to the coverage claim.
 - **Found and not fixed.** Confirmed bugs left open, candidates still waiting on
   a user decision, and anything documented-blocked. An audit that reads clean
   because the hard bugs were deferred is a lie told by omission.
-- **Fixed but not proven.** What you could not verify and what that leaves
-  unknown.
-- **What this could break.** Surfaces sharing a seam with the fixes that were not
-  exercised.
 
-Lead with the largest gap. If a category is genuinely empty, say so — silence is
-not information. Never end a handoff whose only shape is what went well.
-
-## The summary gets reviewed too
-
-Draft the handoff, then hand the draft plus the real change and its evidence to
-one fresh peer before the user sees it. You wrote the work, so you are the worst
-judge of what the write-up quietly leaves out.
-
-Ask it for exactly that: what the summary omits, softens, or overclaims — above
-all in what is not done. Anything it adds that you verify goes into the summary.
-This is one cheap pass, not another review round; the code was already reviewed.
-
-## Then say it simply
-
-What lands in chat is short and plain. A few lines, ordinary words, no tables, no
-dumps of evidence:
-
-- What now works that did not.
-- What it means for the person reading, not what you did to get there.
-- What is missing or unproven — the honest part, kept honest.
-
-No step-by-step, no method, no file inventory, no counts of reviews and rounds.
-The plan, the diff, the evidence and the full gap list already exist as
-artifacts; offer them in one line. If the user wants to go deeper, that is their
-next message, not your current one.
+The beat 4 adversary returns the `OMISSIONS` line like any other reviewer; that
+is where the write-up gets checked, not in a separate pass.
 
 ## Handoff
 

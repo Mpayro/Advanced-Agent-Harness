@@ -14,10 +14,22 @@ diff instead of the user, and the accepted diff is committed automatically to an
 isolated branch. Everything else — the peer table, the release conditions, the
 verification discipline, the limits — is inherited unchanged.
 
-The base skill's Superpowers table applies here unchanged — brainstorming before
-the shape is settled, tests before implementation, systematic debugging before
-any fix, verification before any claim — and so does `ponytail`. Nobody is
-watching this run, which is the reason to follow them, not to skip them.
+Exactly one base rule is superseded, and naming it is the point: the base tells you
+to ask before committing, at the handoff. Here that asking already happened, in the
+opening consent, so the commit does not wait for a second question. Nothing else
+moves with it — push, merge, deploy, promote, and migrate still wait for what the
+consent named, and the base's rule governs every one of them unchanged.
+
+The base's checkpoint commits are inherited too, and they reach this branch as
+they reach any other — reaching the branch is not landing, and nothing below calls
+it that. That is what beat 4's gate below is built around: by the
+time the reviewer accepts, the work is already committed, so the gate cannot be a
+check on the staging area — there is nothing staged — and it does not try to be.
+
+The base skill's process rules apply here unchanged — above all, show the failure
+before changing the behaviour, and run the mapped checks before claiming any of
+it works — and so does `ponytail`. Nobody is watching this run, which is the
+reason to follow them, not to skip them.
 
 Human-gated remains the default for long work. This variant is allowed only when
 both the authority and the task are explicit.
@@ -27,7 +39,8 @@ both the authority and the task are explicit.
 Say exactly what will happen and get it confirmed before anything else:
 
 - The plan will be approved by a reviewer, not by you.
-- The approved diff will be committed automatically to an isolated branch.
+- Work is checkpointed to an isolated branch as it goes, and the reviewer-accepted
+  commit on that branch is declared the delivered state without asking you again.
 - The reviewer approves within the authorized objective; it cannot invent intent,
   widen scope, or authorize a production effect.
 - Release steps — push, merge, deploy, promote, migrate — run automatically only
@@ -60,7 +73,6 @@ to a fresh reviewer with no context. It defaults to rejecting when evidence is
 missing.
 
 ```text
-TARGET_ARTIFACT: <sha256> <canonical-path>
 VERDICT: APPROVE or REJECT
 PLAN: same-line assessment
 COUNTEREVIDENCE: same-line concern or none
@@ -77,55 +89,56 @@ plan exists:
   not consume an attempt.
 
 On rejection, verify each blocker, revise only for the confirmed ones, freeze the
-new plan, and use a fresh reviewer. Record the plan digest as approved; the diff
-reviewer will be asked to echo it back.
+new plan, and use a fresh reviewer. Record the approved plan's digest yourself.
 
-## Beat 4 — the reviewer approves the diff, then it commits
+## Beat 4 — the reviewer approves the diff, then it lands
 
-Freeze the approved plan digest, the exact patch, and the verification evidence,
-and dispatch a fresh reviewer. It returns the same five labels plus the approved
-plan digest. Compare that digest to the one you recorded: any mismatch goes back
-to the user, because it means the diff under review is not the plan that was
-approved.
+Freeze the approved plan, the exact patch, and the verification evidence, and
+dispatch a fresh reviewer. Before dispatching, check the plan you are sending
+against the digest you recorded: any mismatch goes back to the user, because it
+means the diff under review is not the plan that was approved. You hold both
+artifacts — verify that yourself rather than asking the reviewer to attest to it.
 
-Commit only after that acceptance and after the heavy-review question is
-resolved, from a clean isolated worktree, using the accepted patch as the sole
-staging input. Verify the staged diff digest equals the accepted one and abort on
-any other staged bytes.
+**Commit the frozen bytes first, then record that commit's sha.** In that order,
+always: a sha taken by clock is a pointer to whatever happened to be committed, and
+the patch you froze was built from the working tree. Freeze after a rejected round
+and the two are different things — the sha holds the version that was rejected and
+the fix that earned the acceptance is not in any commit at all.
 
-If the heavy bug review changes code, re-verify and re-review once before
-committing, and compare digests again.
+Then land only after that acceptance and after the heavy-review question is
+resolved. **What lands is that recorded sha — not the branch, not its tip.**
+Anything committed afterwards, living-plan updates included, is simply not part of
+what landed; it stays on the branch for the next round.
+
+Landing means declaring that sha the delivered state of the branch and naming it in
+the handoff. Withholding a landing is therefore not silence: the branch keeps its
+bytes, nothing is reset or discarded, and the handoff says the run delivered nothing
+and which gate withheld it.
+
+That is the whole gate, and it is shaped this way on purpose. Every earlier version
+tried to *detect* drift — diff the tip, compare digests, abort on surprise — and
+each one either aborted on the run's own bookkeeping or inspected a point that
+predated the drift and passed while asserting nothing. Landing a fixed sha makes
+drift structurally irrelevant instead of detectable. Nothing lands that the reviewer
+did not accept, because the accepted thing is the only thing named.
+
+Re-review re-records, in the same order. If the heavy bug review changes code, or
+the browser check sends work back, the new bytes are committed, frozen, accepted,
+and that commit's sha recorded in turn — the old sha never lands after that.
+
+Re-verify before that re-review, and never land a sha that no reviewer accepted.
 
 ## Last check — the product, in a browser
 
-This runs last, after the review and before anything is handed off, committed, or
-released. A product with a UI is not verified until someone drove it.
-
-- Launch Chrome with a throwaway profile and remote debugging. Never the user's
-  own profile, never their logged-in session.
-- Walk the changed journey end to end, the way a person would — not one widget in
-  isolation. Then walk one path that should fail: empty, invalid, unauthorized,
-  refreshed mid-flow, or navigated back into.
-- Record the routes, the actions, what was actually visible, the console and
-  network evidence, and the state left behind. A screenshot alone proves the page
-  rendered, not that the feature works.
-- Use local or preview state and disposable data. Never a destructive or
-  production mutation without explicit authority.
-
-Three outcomes, and one of them must be stated out loud:
-
-- **Passed** — the journey and its negative path behaved as the plan said.
-- **Failed** — say what broke; it goes back to the previous beat.
-- **Unavailable** — say why (no browser, no environment, no fixture). The change
-  is then unverified on that surface, and it is reported that way.
-
-A change with no reachable UI records "no UI surface" and moves on. That is a
-stated outcome, not a silent skip. A green unit suite never substitutes for this.
-
 The base skill's last check is not optional here, and it is not the reviewer's
-job. Run it before the commit. A required browser check that came back failed or
-unavailable blocks the auto-commit: an autonomous run may not commit a UI change
-that nobody drove.
+job. Run it unchanged, before the landing.
+
+One rule is this mode's alone: a required browser check that came back failed or
+unavailable **blocks the landing and every release step after it**, because an
+autonomous run may not ship a UI change that nobody drove. Say "blocks the commit"
+and it blocks nothing — the bytes reached the branch at checkpoint time, before any
+of this ran. What is withheld is the landing, the push, and everything the consent
+named; the branch stays where it is and the handoff says why.
 
 ## Beat 5 — the authorized release
 
@@ -137,64 +150,33 @@ only when that consent named that exact action and the base skill's four release
 conditions all hold. Commit authority is not release authority; never infer one
 from the other.
 
-Run only after the commit exists and the heavy-review question is resolved.
+Run only after the landing happened and the heavy-review question is resolved. A
+checkpoint on the branch is not the landing; if the landing was withheld, so is
+this.
 Execute the plan's steps in its order, verify each before the next, and stop at
 the first failure with the rollback state stated. One pass, no retry.
 
-## What is not done
+## The handoff
 
-The user reads a finished report as a finished feature. Correcting that is your
-job, not theirs, and it is the part of the handoff that gets skipped.
-
-Say plainly, in their words and without softening:
-
-- **Asked for and not built.** Anything they raised that this change does not do,
-  and whether it was deferred, ruled out of scope, or blocked. Name it even if
-  they seemed to drop it — people remember what they asked for.
-- **Looks done and is not.** Stubs, TODOs, hardcoded values, a happy path with no
-  error handling, a case that silently does nothing. Anything that would pass a
-  demo and fail on a Tuesday.
-- **Built but not proven.** What you could not verify, what environment or data
-  would have been needed, and what that leaves unknown.
-- **What this could break.** The surfaces that share a seam with the change and
-  were not exercised.
-
-Lead with the largest gap. If a category is genuinely empty, say so — "no
-unhandled cases" is information; silence is not. Never end a handoff whose only
-shape is what went well.
-
-## The summary gets reviewed too
-
-Draft the handoff, then hand the draft plus the real change and its evidence to
-one fresh peer before the user sees it. You wrote the work, so you are the worst
-judge of what the write-up quietly leaves out.
-
-Ask it for exactly that: what the summary omits, softens, or overclaims — above
-all in what is not done. Anything it adds that you verify goes into the summary.
-This is one cheap pass, not another review round; the code was already reviewed.
-
-## Then say it simply
-
-What lands in chat is short and plain. A few lines, ordinary words, no tables, no
-dumps of evidence:
-
-- What now works that did not.
-- What it means for the person reading, not what you did to get there.
-- What is missing or unproven — the honest part, kept honest.
-
-No step-by-step, no method, no file inventory, no counts of reviews and rounds.
-The plan, the diff, the evidence and the full gap list already exist as
-artifacts; offer them in one line. If the user wants to go deeper, that is their
-next message, not your current one.
+The base skill's "What is not done" and "Then say it simply" apply unchanged.
+Nobody watched this run, so the gap list is the only thing standing between a
+green report and a false impression of completeness.
 
 ## Closing
 
 The run is finished when the plan was accepted, the diff was accepted, the
-heavy-review question was answered, the commit exists on the isolated branch, and
-every authorized release step finished. Not before.
+heavy-review question was answered, the accepted sha landed, and every authorized
+release step finished. Not before. A branch carrying checkpoints is not a landing:
+a run whose landing was withheld is unfinished, and says which gate withheld it.
+
+Say where the branch stands relative to what landed, always, because they are
+rarely the same commit and only one of them was reviewed. Committed-but-not-landed
+is its own category and it is not dirt: name the landed sha, say how many commits
+the tip is ahead of it and what they are, and never let "the branch" stand in for
+"what was accepted".
 
 Report what changed, the verification you ran, the reviewer round counts, the
-commit and its branch, the dirty state, what remains uncertain, and each release
+landed sha and its branch, the dirty state, what remains uncertain, and each release
 step as executed, failed with its rollback state, not reached, or — only for
 something the consent never named — proposed.
 

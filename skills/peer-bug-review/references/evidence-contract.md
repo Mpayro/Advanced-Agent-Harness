@@ -12,9 +12,8 @@ Determine expected behavior from the strongest current authority:
 6. current docs/comments;
 7. historical behavior.
 
-If authorities conflict, do not silently choose the one that makes the finding look
-like a bug. Classify `NEEDS_DECISION` and tag its reason as `CONTRACT_DRIFT`;
-`CONTRACT_DRIFT` is not a separate terminal verdict.
+When authorities conflict, never silently pick the one that makes the finding
+look like a bug. Classify `NEEDS_DECISION` and say which authorities disagree.
 
 ## Required proof for `CONFIRMED_BUG`
 
@@ -66,15 +65,18 @@ separate `--artifact-file`. The command writes one immutable, ledger-owned bundl
 that gate's next iteration. Give the reviewer that bundle path and digest; external
 references are context only.
 
-Every valid response must also contain exactly:
+Every recorded artifact must also contain exactly:
 
 ```text
 TARGET_ARTIFACT: <bundle-sha256> <bundle-canonical-path>
 ```
 
-The ledger re-hashes the bundle, binds it to stage/finding/iteration, and rejects a
-second freeze for the same gate. Schema-v2 ledgers remain readable as
-`legacy_unbound` history but cannot accept new review gates.
+Never ask the reviewer to echo that digest — `render_review_batch.py` stamps it
+from the frozen target. Use the structured path below for every ledger gate;
+hand-written evidence is the fallback only where that path is unavailable.
+
+The ledger re-hashes the bundle, binds it to stage/finding/iteration, and rejects
+a second freeze for the same gate.
 
 Grade only the named stage. In particular, a plan reviewer judges whether the plan
 would work; it must not reject because the unimplemented code does not contain the
@@ -123,25 +125,18 @@ canonical per-target evidence:
 python3 scripts/render_review_batch.py <batch-result.json> <evidence-directory>
 ```
 
-The renderer accepts one stage and at most four target results, validates
-stage-specific fields and verdicts, keeps every required label non-empty on the same
-line, and prints a recording manifest. It is the only permitted normalization layer;
-never hand-edit a malformed model verdict into compliance.
+One stage and at most four targets per batch. The renderer is the only permitted
+normalization layer; never hand-edit a malformed verdict into compliance.
 
-Plan-review artifacts must contain `VERDICT:`, `PLAN:`, and `COUNTEREVIDENCE:`.
-Fix-review artifacts must contain `VERDICT:`, `DIFF:`, `TESTS:`, and
-`COUNTEREVIDENCE:`. Final-integration artifacts must contain `VERDICT:`,
-`COVERAGE:`, `PRODUCT_CHECKS:`, `INTERACTIONS:`, and
-`REMAINING_UNCERTAINTY:`.
-Every required label must have non-empty content on that same physical line;
-additional detail may follow below it. State this explicitly in every reviewer
-prompt. A heading followed only by bullets on later lines is malformed evidence,
-not a technical iteration.
+Required labels per stage — plan: `VERDICT:`, `PLAN:`, `COUNTEREVIDENCE:`. Fix:
+`VERDICT:`, `DIFF:`, `TESTS:`, `COUNTEREVIDENCE:`. Integration: `VERDICT:`,
+`COVERAGE:`, `PRODUCT_CHECKS:`, `INTERACTIONS:`, `REMAINING_UNCERTAINTY:`. Every
+label carries non-empty content on its own physical line; a heading followed only
+by bullets is malformed evidence. State this in every reviewer prompt.
 
-Each response has exactly one controlling stage outcome. `CLASSIFICATION:` is valid
-only for confirmation; plan, fix, and integration responses use `VERDICT:`. Do not
-record an artifact that includes a controlling marker from another stage or any
-trailing text after the one allowed controlling value.
+One controlling outcome per response: `CLASSIFICATION:` for confirmation,
+`VERDICT:` everywhere else. Never record an artifact carrying another stage's
+marker.
 
 ## Fast plan waiver
 
@@ -167,20 +162,12 @@ Then run `review_state.py waive-plan`. This transitions the finding to `ready`
 without fabricating a reviewer. Confirmation and post-fix review remain mandatory.
 High/critical findings and exhaustive-profile runs may never use this waiver.
 
-## Workflow state transitions
+## When a finding is done
 
-| Mode/stage | Accepted or classified outcome | Ledger state | Terminal here? |
-|---|---|---|---|
-| Audit confirmation | confirmed bug | `confirmed_bug` | No; document and review the plan |
-| Fast plan waiver | valid waiver | `ready` | Audit only; repair still needs implementation |
-| Audit plan | accepted | `ready` | Yes for the finding; no product mutation is required |
-| Repair plan | accepted | `ready` | No; implementation has not started |
-| Repair fix | accepted | `accepted` | Yes for the finding |
-| Any confirmation | not a bug, duplicate, or needs decision | matching classification | Yes for the finding |
-| Integration | accepted | `complete` | Yes for the run |
-
-An audit run with only `ready` and other terminal classifications is the explicit
-no-change success path. In repair mode, `ready` is never completion.
+`review_state.py summary` prints the live states; it owns them, not this file.
+Two rules the states do not carry on their own: an audit run holding only `ready`
+and other terminal classifications is the explicit no-change success path, and in
+repair mode `ready` is never completion — only `accepted` is.
 
 ## Late authority conflicts
 
@@ -193,36 +180,20 @@ separate candidate on the same inventory item with:
 --decision-for-subject <finding-id|RUN>
 ```
 
-Blindly confirm that candidate. A `NOT_A_BUG` or `DUPLICATE` clears the linked gate.
-A `NEEDS_DECISION` blocks only the exact linked gate until one of these is appended:
+Blindly confirm that candidate. A `NOT_A_BUG` or `DUPLICATE` clears the linked
+gate. A `NEEDS_DECISION` blocks only that gate until a decision is appended with
+`annotate-decision` (direct user authority — `DECISION:`, `AUTHORITY:`,
+`RESOLVES:`) or `annotate-resolution` (a related accepted fix resolved it —
+`RESOLUTION:`, `RESOLVED_BY:`, `PROOF:`, `REMAINING_UNCERTAINTY:`). The ledger
+checks that `RESOLVES:` matches the linked gate and `RESOLVED_BY:` matches
+`--resolved-by`.
 
-```text
-DECISION: exact user decision
-AUTHORITY: why that decision now controls
-RESOLVES: <decision-id> <stage>:<subject>:<technical-iteration>
-```
+If the gate target was already frozen, use `supersede-target --decision-id <id>`,
+then retry the original gate with a fresh reviewer at the same iteration number.
 
-Use `annotate-decision` for direct user authority, or `annotate-resolution` when a
-related accepted fix resolves it. If the gate target was already frozen, use
-`supersede-target --decision-id <id>`: the ledger keeps the old bundle, copies every
-original byte into the replacement, appends the decision evidence, and permits that
-decision to supersede the unconsumed target once. Then retry the original gate with a
-fresh reviewer; its technical iteration number is unchanged.
-
-## Historical resolution annotation
-
-Do not rewrite a terminal classification when a later accepted related fix resolves
-its uncertainty. Use `annotate-resolution` with a separate artifact:
-
-```text
-RESOLUTION: RELATED_ACCEPTED_FIX
-RESOLVED_BY: exact accepted finding ID
-PROOF: evidence that the related fix resolves the old uncertainty
-REMAINING_UNCERTAINTY: what still remains, including none
-```
-
-The target remains `NEEDS_DECISION` historically; reports must show the appended
-`resolved_by` relationship beside it.
+Never rewrite a terminal classification because a later fix resolved it. The
+target stays `NEEDS_DECISION` historically, with the `resolved_by` relationship
+shown beside it.
 
 ## Lifecycle matrix
 
@@ -237,16 +208,14 @@ For stateful or business logic, test applicable axes:
 - permission, authorization, concurrent write, rollback, and idempotent retry;
 - source failure, timeout, offline data, and stale snapshot.
 
-The session that inspired this skill passed happy-path tests while missing a public
-transaction bypass, carry loss after refresh, and release after refresh. Review the
-whole lifecycle, not only the first reproduction.
+Review the whole lifecycle, not only the first reproduction: the run that
+inspired this skill passed every happy-path test and still shipped a public
+transaction bypass.
 
 ## Review verdict rules
 
-- Reject with a concrete reproduction or missing proof requirement.
-- Do not reject for style preference.
-- Do not accept because the suite is green.
-- Verify reviewer claims locally before changing code.
-- Count every rejected round deterministically.
-- If disagreement is about product intent, stop labeling it a bug and request the
-  decision.
+- Reject only with a concrete reproduction or a named missing proof, never for
+  style, and never accept because the suite is green.
+- Verify every reviewer claim locally before changing code.
+- When the disagreement is about product intent, stop calling it a bug and ask
+  for the decision.
