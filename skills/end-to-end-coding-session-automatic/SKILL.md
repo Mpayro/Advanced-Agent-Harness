@@ -23,9 +23,13 @@ consent named, and the base's rule governs every one of them unchanged.
 
 The base's checkpoint commits are inherited too, and they reach this branch as
 they reach any other — reaching the branch is not landing, and nothing below calls
-it that. That is what beat 4's gate below is built around: by the
-time the reviewer accepts, the work is already committed, so the gate cannot be a
-check on the staging area — there is nothing staged — and it does not try to be.
+it that. That is what beat 4's gate below is built around: the gate cannot be a
+check on the staging area, because whether anything is staged depends on where the
+run happens to be. Checkpoint as the base says and the tree is clean at the freeze,
+so the frozen patch is already committed and the gate has nothing to stage; arrive
+at the freeze with work still in the tree — after a rejected round, most often —
+and it is not. Both are ordinary. The gate below works the same either way, which
+is why it commits first and reads a sha rather than a staging area.
 
 The base skill's process rules apply here unchanged — above all, show the failure
 before changing the behaviour, and run the mapped checks before claiming any of

@@ -314,6 +314,74 @@ def mutation_control(
         errors.append(f"validator: mutation control failed for {label} {phrase!r}")
 
 
+# One skill claiming something about another is the failure mode that actually
+# recurred: four of the defects found across six review rounds were a file
+# asserting a rule its neighbour no longer carried. Each entry says "if the
+# claimant still makes this claim, the backer must still carry this rule."
+# Deleting either side alone is what nothing used to catch.
+PAIRED_CLAIMS = (
+    (
+        "end-to-end-coding-session-automatic",
+        "Exactly one base rule is superseded",
+        "end-to-end-coding-session",
+        "Ask before commit",
+    ),
+    (
+        "end-to-end-coding-session-automatic",
+        "The base's checkpoint commits are inherited too",
+        "end-to-end-coding-session",
+        "no slice is left only in the tree once it lands",
+    ),
+    (
+        "end-to-end-coding-session-automatic",
+        "The base skill's last check is not optional here",
+        "end-to-end-coding-session",
+        "Last check — the product, in a browser",
+    ),
+    (
+        "peer-bug-review",
+        "`end-to-end-coding-session` owns the branch",
+        "end-to-end-coding-session",
+        "Work on an isolated",
+    ),
+    (
+        "peer-bug-review",
+        "Where a repair runs in place because the repo requires it",
+        "end-to-end-coding-session",
+        "Never commit to the user's branch to satisfy this",
+    ),
+    (
+        "coding-peers",
+        "uses the stage format in",
+        "peer-bug-review",
+        "references/evidence-contract.md",
+    ),
+)
+
+
+def paired_errors(
+    texts: dict[str, str],
+    pairs: tuple[tuple[str, str, str, str], ...] = PAIRED_CLAIMS,
+) -> list[str]:
+    """A claim about a neighbouring skill must still be true of that neighbour.
+
+    `pairs` is a parameter so the self-control can drive it with its own table:
+    a control that fed the real one synthetic skill names would match no claimant
+    and pass while asserting nothing.
+    """
+    errors: list[str] = []
+    for claimant, claim, backer, backing in pairs:
+        claimant_text = flat(texts.get(claimant, ""))
+        if claim not in claimant_text:
+            continue
+        if backing not in flat(texts.get(backer, "")):
+            errors.append(
+                f"{claimant}: claims {claim!r} but {backer} no longer carries "
+                f"{backing!r}"
+            )
+    return errors
+
+
 def unreachable(skill_text: str, bodies: dict[str, str]) -> list[str]:
     """Names in `bodies` that `skill_text` cannot reach in one hop.
 
@@ -639,6 +707,18 @@ def main() -> int:
     ):
         errors.append("validator: reachability self-control failed")
 
+    # Paired-claim self-control: a live claim with a missing backer must be
+    # caught, a claim the claimant no longer makes must be ignored, and a claim
+    # whose backer still carries the rule must pass.
+    control = (("a", "claims X", "b", "carries Y"),)
+    if (
+        not paired_errors({"a": "claims X", "b": "carries nothing"}, control)
+        or paired_errors({"a": "says nothing", "b": "carries nothing"}, control)
+        or paired_errors({"a": "claims X", "b": "carries Y"}, control)
+    ):
+        errors.append("validator: paired-claim self-control failed")
+
+    errors.extend(paired_errors(texts))
     errors.extend(orphan_reference_errors())
     errors.extend(installed_mirror_errors())
 
